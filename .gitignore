@@ -1,0 +1,18 @@
+# Curriculum material managed by the Build With AI: Basics skills
+.agents/
+.claude/
+agent/
+skills-lock.json
+
+# Personal learning context — keep out of commits by default
+/devpost/learner-profile.md
+
+# Local credentials — never commit. A secret-free .env.example is allowed.
+.env
+.env.*
+!.env.example
+
+# Project build artifacts
+node_modules/
+webapp/data/
+plugin/main.js

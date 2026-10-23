@@ -1,0 +1,184 @@
+/* Diary of a Stranger — nostalgic, warm: worn paper, lamp-glow, ink. */
+
+:root {
+  --paper: #f3e9d7;
+  --paper-deep: #ecdfc9;
+  --ink: #2f2821;
+  --ink-soft: #6b5d4f;
+  --lamp: #e8c07d;
+  --lamp-glow: rgba(232, 192, 125, 0.35);
+  --heart: #b3534b;
+  --rule: #d8c6ab;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--lamp-glow), transparent 60%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.85;
+}
+
+a { color: inherit; }
+
+/* ---- masthead ---- */
+
+.masthead {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 2.2rem 1.2rem 0.4rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.masthead-title {
+  font-size: 1.18rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.15rem;
+}
+
+.masthead-sub {
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: 0.86rem;
+}
+
+/* ---- the entry page ---- */
+
+main {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 0 1.2rem 3.5rem;
+}
+
+.entry {
+  margin-top: 1.4rem;
+  padding: 2.2rem 2.4rem 2rem;
+  background:
+    radial-gradient(120% 90% at 20% 0%, var(--lamp-glow), transparent 55%),
+    linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(255, 253, 247, 0.8) inset, 0 10px 22px -14px rgba(60, 42, 20, 0.5);
+}
+
+.entry-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.2rem;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+}
+
+.tag-chip {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.02rem 0.6rem;
+  margin-right: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.entry-date { font-style: italic; }
+
+.entry-text {
+  font-size: 1.06rem;
+  max-width: 62ch;
+}
+
+.sentence { transition: background 0.6s ease; }
+
+.heart-count {
+  color: var(--heart);
+  font-size: 0.72rem;
+  font-family: var(--serif);
+  vertical-align: 0.28em;
+  padding-left: 0.28rem;
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+/* ---- footnotes: the comments ---- */
+
+.entry-footnotes { margin-top: 2rem; }
+
+.comments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.comment {
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 0.94rem;
+}
+
+.comment:last-child { border-bottom: 0; }
+
+.comment-meta {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-style: italic;
+  margin-bottom: 0.1rem;
+}
+
+/* ---- next + whisper ---- */
+
+.next { margin-top: 1.8rem; text-align: center; }
+
+.next-link {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 0.12rem;
+  font-style: italic;
+}
+
+.next-link:hover { color: var(--ink); }
+
+.empty-whisper {
+  margin-top: 2.4rem;
+  text-align: center;
+  color: var(--ink-soft);
+  opacity: 0.75;
+  font-style: italic;
+  padding: 2.6rem 1rem;
+}
+
+/* ---- colophon ---- */
+
+.colophon {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 1.4rem 1.2rem 2.6rem;
+  color: var(--ink-soft);
+  opacity: 0.65;
+  font-size: 0.78rem;
+  font-style: italic;
+  text-align: center;
+}

@@ -1,0 +1,22 @@
+{
+  "name": "diary-of-a-stranger",
+  "version": "0.1.0",
+  "description": "A quiet pool of strangers' latest diary entries — read anonymously, heart sentences, publish from Obsidian.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node webapp/server.js",
+    "build:plugin": "esbuild plugin/main.ts --bundle --external:obsidian --format=cjs --target=node18 --outfile=plugin/main.js",
+    "test": "node devpost/checks/contract-test.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.8.0",
+    "typescript": "^5.7.0"
+  }
+}
