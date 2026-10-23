@@ -498,7 +498,8 @@ class DiarySettingTab extends PluginSettingTab {
         t.setValue(this.plugin.settings.autoPublish).onChange(async (v) => {
           this.plugin.settings.autoPublish = v;
           if (v) {
-            this.plugin.queueAutoPublish();
+            // First auto send comes quickly (~10s) — toggle it on, watch it work.
+            this.plugin.queueAutoPublishSoon(10000);
           } else {
             this.plugin.cancelAutoPublish();
           }
