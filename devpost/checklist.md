@@ -101,15 +101,15 @@ Build mode: fast (chosen at first build session; can be changed any time)
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [x] Learning activity complete — guided route (publish, the action the learner had already proven from real Obsidian, traced through its three owners)
+- [x] Optional edit and transfer reflection addressed — footer-string edit offered; learner kept a change of their own ("Isn't everything amazing?") — verified and committed; reflection question offered, pending answer
+- [x] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
 
-Activity and evidence: [what actually happened; real document/test/code references; unfinished work if interrupted]
-Route and stops: [actual paths and symbols; guided stops completed, or reference-only route]
-Edit outcome: [tried/kept/reverted/declined/not applicable; verification if changed]
-Reflection: [offered/answered/declined/already covered — personal answer belongs only in the ignored profile]
-Activity mode: [live app and editor, explicit static fallback, focused alternative, prior practice, or recap]
+Activity and evidence: guided route after final review on `localhost:3000` live; stops: (1) `plugin/main.ts` → `sendToPool` (2) `webapp/routes/publish.js` → `normalizeTags` topping into `webapp/db.js` → `publishEntry` (3) `webapp/routes/mine.js` + `webapp/views/entry.js` → `entryBody`; anchor strings verified by grep against current source; map's 18-checks claim cross-checked against the contract test.
+Route and stops: completed interactively by the learner (guided route above); the map repeats the same route labeled for reference.
+Edit outcome: kept by the learner (footer string in `webapp/views/layout.js`), syntax-checked and verified live; committed as their edit.
+Reflection: offered once — "What would you do differently next time you start with an agent?"; answer optional.
+Activity mode: live app + editor (learner's machine; pool running at `localhost:3000`).
 
 ## Revisions
 
