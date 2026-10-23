@@ -24,7 +24,12 @@ const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work",
 
 // Windows/desktop builds: manifest and bundle are versioned together; the
 // Community plugins panel shows this, so a stale copy is immediately visible.
-const VERSION = "0.1.3";
+const VERSION = "0.2.0";
+
+// How long the writing must go quiet before an auto-publish fires. Diaries
+// breathe slowly; every keystroke must not be a publish (kernel cost: each
+// publish rewrites the writer's one pool row — cheap, but not free).
+const AUTO_DELAY_MS = 3 * 60 * 1000;
 
 type Chip = (typeof CHIPS)[number];
 
@@ -33,6 +38,7 @@ interface DiaryOfAStrangerSettings {
   diaryFolder: string;
   username: string;
   password: string;
+  autoPublish: boolean;
 }
 
 const DEFAULT_SETTINGS: DiaryOfAStrangerSettings = {
@@ -40,6 +46,7 @@ const DEFAULT_SETTINGS: DiaryOfAStrangerSettings = {
   diaryFolder: "Diary",
   username: "",
   password: "",
+  autoPublish: false,
 };
 
 // ---------- tag extraction (plain markdown mechanics) ----------
@@ -205,6 +212,8 @@ class PublishModal extends Modal {
 
 export default class DiaryOfAStrangerPlugin extends Plugin {
   settings: DiaryOfAStrangerSettings = DEFAULT_SETTINGS;
+  private autoTimer: number | null = null;
+  private lastAutoText: string | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -220,6 +229,91 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
     });
 
     this.addSettingTab(new DiarySettingTab(this.app, this));
+
+    // Auto mode (opt-in): the sweep listens while the writer types; the settle
+    // timer decides when a publish is actually worth sending (auto priority
+    // re-checked at fire time, so toggling off mid-window cancels the send).
+    this.registerEvent(
+      this.app.vault.on("modify", (f) => {
+        if (!this.settings.autoPublish) return;
+        if (!(f instanceof TFile) || f.extension !== "md") return;
+        if (!this.isInDiaryArea(f.path)) return;
+        this.queueAutoPublish();
+      })
+    );
+
+    // "The latest entry should be up" also at fresh eyes: one attempt per launch.
+    if (this.settings.autoPublish) this.queueAutoPublishSoon(8000); // let Obsidian settle first
+  }
+
+  private runAutoPublishGraceful() {
+    this.runAutoPublish().catch((e) => console.log(`[DoaS v${VERSION}] auto-publish crashed: ${e?.message ?? e}`));
+  }
+
+  // --- auto-publish (opt-in; learner-requested during kick-the-tires) ---
+
+  private isInDiaryArea(path: string): boolean {
+    const folder = normalizeFolderPath(this.settings.diaryFolder);
+    if (!folder) return true; // "/" = the whole vault
+    return path === folder || path.startsWith(folder + "/");
+  }
+
+  queueAutoPublish() {
+    this.queueAutoPublishSoon(AUTO_DELAY_MS);
+  }
+
+  queueAutoPublishSoon(ms: number) {
+    if (this.autoTimer != null) window.clearTimeout(this.autoTimer);
+    // The timer checks autoPublish again at fire time — toggling off mid-window cancels the send.
+    this.autoTimer = window.setTimeout(() => {
+      this.autoTimer = null;
+      this.runAutoPublishGraceful();
+    }, ms);
+    console.log(`[DoaS v${VERSION}] auto-publish queued (~${Math.round(ms / 1000)}s from now)`);
+  }
+
+  cancelAutoPublish() {
+    if (this.autoTimer != null) {
+      window.clearTimeout(this.autoTimer);
+      this.autoTimer = null;
+      console.log(`[DoaS v${VERSION}] auto-publish timer cancelled`);
+    }
+  }
+
+  private async runAutoPublish() {
+    if (!this.settings.autoPublish) return;
+    const missing = this.configured();
+    if (missing.length > 0) {
+      console.log(`[DoaS v${VERSION}] auto-publish skipped, missing settings: ${missing.join(", ")}`);
+      return;
+    }
+    const folderPath = normalizeFolderPath(this.settings.diaryFolder);
+    const target = folderPath ? this.app.vault.getAbstractFileByPath(folderPath) : this.app.vault.getRoot();
+    if (!target || !(target instanceof TFolder)) {
+      // Auto stays quiet about missing folders (the manual command's Notices are
+      // the discovery tools) — only the console keeps the trail.
+      console.log(`[DoaS v${VERSION}] auto-publish skipped: folder "${folderPath}" not found`);
+      return;
+    }
+    const files: TFile[] = [];
+    collectMarkdown(target, files);
+    const note = chooseNewest(files);
+    if (!note) {
+      console.log(`[DoaS v${VERSION}] auto-publish skipped: no markdown notes found`);
+      return;
+    }
+    const content = await this.app.vault.read(note);
+    const { body } = stripFrontmatter(content);
+    const plain = body.trim();
+    if (!plain) return;
+    // Identical content skips the send (no re-publish churn while idle).
+    if (plain === this.lastAutoText) {
+      console.log(`[DoaS v${VERSION}] auto-publish skipped: unchanged since last publish`);
+      return;
+    }
+    const tags = chipsFromNote(content);
+    const ok = await this.sendToPool(note, plain, tags, true);
+    if (ok) this.lastAutoText = plain; // only remember successes, so failures retry
   }
 
   private async loadSettings() {
@@ -296,9 +390,9 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
     }).open();
   }
 
-  private async sendToPool(note: TFile, text: string, tags: Chip[]) {
+  private async sendToPool(note: TFile, text: string, tags: Chip[], auto = false): Promise<boolean> {
     const pool = this.settings.poolAddress.trim().replace(/\/+$/, "");
-    console.log(`[DoaS v${VERSION}] sending ${text.length} chars to ${pool}/api/publish (tags: ${tags.join(", ") || "none"})`);
+    console.log(`[DoaS v${VERSION}] ${auto ? "AUTO " : ""}sending ${text.length} chars to ${pool}/api/publish (tags: ${tags.join(", ") || "none"})`);
     let resp: RequestUrlResponse;
     try {
       // requestUrl rides Obsidian's own network stack — no CORS preflight,
@@ -321,7 +415,7 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       // The only throw here is the network itself.
       console.log(`[DoaS v${VERSION}] request to pool REJECTED: ${e?.message ?? e}`);
       new Notice(`Is the diary pool running? The request to ${pool} failed — ${e?.message ?? e}`);
-      return;
+      return false;
     }
 
     let data: any = null;
@@ -333,15 +427,18 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
 
     if (resp.status === 200 && data?.ok) {
       new Notice(
-        `Published — ${data.createdAccount ? "your account just came into being. " : ""}Peek at ${pool}${data.payoffPath ?? "/mine"} to see hearts land.`
+        auto
+          ? `Auto-published — your newest entry is in the pool (${pool}${data.payoffPath ?? "/mine"}).`
+          : `Published — ${data.createdAccount ? "your account just came into being. " : ""}Peek at ${pool}${data.payoffPath ?? "/mine"} to see hearts land.`
       );
-      return;
+      return true;
     }
     if (data?.error && (resp.status === 401 || resp.status === 422 || resp.status === 400)) {
       new Notice(data.error);
-      return;
+      return false;
     }
     new Notice(`The pool couldn't publish that (status ${resp.status}).`);
+    return false;
   }
 }
 
@@ -391,5 +488,22 @@ class DiarySettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         });
       });
+
+    new Setting(containerEl)
+      .setName("Auto publish")
+      .setDesc(
+        "Publish your newest diary entry automatically — once when Obsidian starts, and ~3 minutes after you stop editing a note in the diary folder. Sends directly, without the preview. The pool keeps only one entry of yours (each publish replaces it), and the word guard still applies."
+      )
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.autoPublish).onChange(async (v) => {
+          this.plugin.settings.autoPublish = v;
+          if (v) {
+            this.plugin.queueAutoPublish();
+          } else {
+            this.plugin.cancelAutoPublish();
+          }
+          await this.plugin.saveSettings();
+        })
+      );
   }
 }

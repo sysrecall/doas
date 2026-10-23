@@ -66,6 +66,13 @@ when present, otherwise by most recently modified. Frontmatter/inline tags that
 match the seven chips come pre-checked in the preview; the preview shows exactly
 what will be sent. Nothing is published until you confirm.
 
+**Auto publish (opt-in, off by default):** when toggled on, the plugin publishes
+your newest diary entry without a preview — once when Obsidian starts, and about
+3 minutes after you stop editing any note inside the diary folder. Identical
+content is skipped (no idle re-publish churn); refused words and network trouble
+still produce a Notice. The pool keeps one entry per writer either way: each
+publish *replaces* your previous one.
+
 A note on trust: usernames and passwords live in the plugin's settings inside
 your vault — it's your machine and your config file; the pool only ever stores
 the account record.
