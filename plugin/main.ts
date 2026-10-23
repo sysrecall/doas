@@ -95,18 +95,26 @@ function datePrefix(name: string): string | null {
   return m ? m[1] : null;
 }
 
-function pickNewestNote(vault: Vault, folderPath: string): TFile | null {
-  const folder = (folderPath || "").trim() ? vault.getAbstractFileByPath(folderPath.trim()) : null;
-  if (!folder || !(folder instanceof TFolder)) return null;
-  const files: TFile[] = [];
-  folder.children.forEach((f) => {
-    if (f instanceof TFile && f.extension === "md") files.push(f);
-  });
-  if (files.length === 0) return null;
+// Obsidian paths are relative to the vault root and reject leading/trailing
+// slashes and "." — people type exactly those (real-world publish feedback).
+function normalizeFolderPath(raw: string): string {
+  const cleaned = (raw || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  return cleaned === "." ? "" : cleaned;
+}
 
-  // Date-prefixed notes win by their purposed name; otherwise mtime decides.
+// Recursive: markdown notes in subfolders of the diary folder count too.
+function collectMarkdown(folder: TFolder, out: TFile[]): void {
+  folder.children.forEach((f) => {
+    if (f instanceof TFile && f.extension === "md") out.push(f);
+    else if (f instanceof TFolder) collectMarkdown(f, out);
+  });
+}
+
+// Date-prefixed notes win by their purposed name; otherwise mtime decides.
+function chooseNewest(files: TFile[]): TFile | null {
+  if (files.length === 0) return null;
   let dated: TFile | null = null;
-  let bestDate = null;
+  let bestDate: string | null = null;
   for (const f of files) {
     const d = datePrefix(f.name);
     if (d && (bestDate === null || d > bestDate)) {
@@ -115,7 +123,7 @@ function pickNewestNote(vault: Vault, folderPath: string): TFile | null {
     }
   }
   if (dated) return dated;
-  return files.sort((a, b) => b.stat.mtime - a.stat.mtime)[0];
+  return [...files].sort((a, b) => b.stat.mtime - a.stat.mtime)[0];
 }
 
 // ---------- the publish preview modal (the only place identity is visible: nobody's) ----------
@@ -224,9 +232,28 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       return;
     }
 
-    const note = pickNewestNote(this.app.vault, this.settings.diaryFolder);
+    const folderPath = normalizeFolderPath(this.settings.diaryFolder);
+    // "" after normalization (they typed "/" or ".") means: search the whole vault.
+    const target = folderPath ? this.app.vault.getAbstractFileByPath(folderPath) : this.app.vault.getRoot();
+    if (!target || !(target instanceof TFolder)) {
+      const tops = this.app.vault
+        .getRoot()
+        .children.filter((f) => f instanceof TFolder)
+        .map((f) => f.name);
+      new Notice(
+        `There is no folder "${folderPath}" in this vault. Top-level folders: ${
+          tops.length ? tops.join(", ") : "(none)"
+        }. If the note is loose in the vault root, set the diary folder to "/".`
+      );
+      return;
+    }
+    const found: TFile[] = [];
+    collectMarkdown(target, found);
+    const note = chooseNewest(found);
     if (!note) {
-      new Notice(`Couldn't find any markdown notes in "${this.settings.diaryFolder}". Check the diary folder setting.`);
+      new Notice(
+        `"${folderPath || "the vault root"}" holds no markdown notes yet (subfolders included). Move today's note into it, or set the diary folder to "/" to search the whole vault.`
+      );
       return;
     }
 
@@ -313,7 +340,7 @@ class DiarySettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Diary folder")
-      .setDesc("Vault folder that holds your diary notes, e.g. Diary")
+      .setDesc('Vault folder that holds your diary notes, e.g. Diary ("/" to search the whole vault)')
       .addText((t) => t.setValue(this.plugin.settings.diaryFolder).onChange(async (v) => {
         this.plugin.settings.diaryFolder = v;
         await this.plugin.saveSettings();

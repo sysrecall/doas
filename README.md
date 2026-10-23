@@ -56,7 +56,8 @@ npm run build:plugin           # produces plugin/main.js (gitignored build artif
 2. Copy `plugin/manifest.json`, `plugin/styles.css`, and `plugin/main.js` into it
 3. Reload Obsidian → Settings → Community plugins → enable **Diary of a Stranger**
 4. Fill the four settings: **pool address** (e.g. http://localhost:3000),
-   **diary folder** (the vault folder holding your diary notes), **username**,
+   **diary folder** (the vault folder holding your diary notes, e.g. `Diary` —
+   subfolders are searched too; `/` searches the whole vault), **username**,
    **password**
 5. Run the command palette → **Diary of a Stranger: Publish to Diary of a Stranger**
 
