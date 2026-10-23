@@ -1,53 +1,185 @@
 // Seed strangers — SIMULATED TEST DATA, clearly labeled in the database (is_seed = 1).
 // These entries exist so the first reader has somewhere alive to land. They are not
 // real people; their diary lines are written for the proof of concept.
+//
+// Timestamps are RELATIVE (computed at seed time, UTC strings as SQLite
+// datetime('now') would store them): every usable pool starts with strangers who
+// wrote yesterday and this morning, no matter when it's installed. relativeTime
+// (views/layout.js) renders "Z"-suffixed UTC correctly.
+//
+// Chip coverage: all seven chips, each claimed by at least one writer.
+// Seed mechanics: seeding is by-identity and idempotent; missing strangers are
+// born, existing writers (including any real publish) are never touched. Hearts
+// are specified as sentence substrings and resolved to real indexes at seed time,
+// so a count can never point at a sentence that doesn't exist.
 
 import { randomBytes } from "node:crypto";
-import { hashPassword, newSessionToken } from "./lib/auth.js";
+import { hashPassword } from "./lib/auth.js";
 import { splitSentences } from "./lib/sentences.js";
+
+function dt(hoursAgo) {
+  return new Date(Date.now() - hoursAgo * 3600 * 1000).toISOString().slice(0, 19).replace("T", " ");
+}
+
+// { byUsername, snippet } — snippet must appear in exactly one sentence.
+const heartShouts = new Map([
+  [
+    "seed-wren",
+    [
+      { byUsername: "seed-fernway", snippet: "the longest distance was between the drawer" },
+      { byUsername: "seed-marrow", snippet: "The late bus is warm and nobody is looking at me" },
+    ],
+  ],
+  [
+    "seed-verity",
+    [
+      { byUsername: "seed-fernway", snippet: "a rabbit watching me work from behind the compost" },
+      { byUsername: "seed-wren", snippet: "at roundabouts, at telephones, at telling people what I want" },
+    ],
+  ],
+  [
+    "seed-marrow",
+    [
+      { byUsername: "seed-sallow", snippet: "setting it down by choice" },
+      { byUsername: "seed-quillight", snippet: "the correct blessing for people like us" },
+    ],
+  ],
+  [
+    "seed-ollar",
+    [
+      { byUsername: "seed-sallow", snippet: "someone who underlined your sentences before you did" },
+      { byUsername: "seed-wren", snippet: "laughing, and then not laughing" },
+    ],
+  ],
+  [
+    "seed-quillight",
+    [
+      { byUsername: "seed-marrow", snippet: "I think I might be allowed to like work" },
+      { byUsername: "seed-fernway", snippet: "The night bus hums like it agrees" },
+    ],
+  ],
+  [
+    "seed-fernway",
+    [
+      { byUsername: "seed-verity", snippet: "it tastes like being expected" },
+      { byUsername: "seed-wren", snippet: "Small joys are the ones that never made it into the plan" },
+    ],
+  ],
+  [
+    "seed-sallow",
+    [
+      { byUsername: "seed-ollar", snippet: "one hand open like a question mark" },
+      { byUsername: "seed-marrow", snippet: "New strangers don't get endings, only pauses" },
+    ],
+  ],
+]);
+
+// { byUsername, ageHoursAfterEntry, text } — ≤140 chars, said by another stranger.
+const noteDrafts = new Map([
+  [
+    "seed-wren",
+    [
+      { byUsername: "seed-verity", afterHours: 20, text: "a decade-long errand finding its counter. i'm rooting for the envelope." },
+      { byUsername: "seed-ollar", afterHours: 20, text: "she left you the errand on purpose. finish it for the both of you." },
+    ],
+  ],
+  [
+    "seed-verity",
+    [
+      { byUsername: "seed-fernway", afterHours: 15, text: "the rabbit is doing inspection rounds. report back when the flag stands." },
+      { byUsername: "seed-marrow", afterHours: 26, text: "hesitation is real. so is roundabout number twelve. keep going." },
+    ],
+  ],
+  [
+    "seed-marrow",
+    [
+      { byUsername: "seed-quillight", afterHours: 19, text: "the correct blessing for the correct people. thank you for holding things up." },
+      { byUsername: "seed-sallow", afterHours: 4, text: "3am corridor-setter-down. respect." },
+    ],
+  ],
+  [
+    "seed-ollar",
+    [
+      { byUsername: "seed-sallow", afterHours: 12, text: "underlined sentences run in blood, apparently. keep the atlas of everything else." },
+      { byUsername: "seed-wren", afterHours: 9, text: "same handwriting, twenty years apart. i have no words. hold this gently." },
+    ],
+  ],
+  [
+    "seed-quillight",
+    [
+      { byUsername: "seed-marrow", afterHours: 13, text: "cake when the lights were on too late for too long — you'll do great there." },
+      { byUsername: "seed-fernway", afterHours: 6, text: "allowed to like work. what a sentence. frame the badge." },
+    ],
+  ],
+  [
+    "seed-fernway",
+    [
+      { byUsername: "seed-verity", afterHours: 5, text: "being awaited somewhere is the whole economy. collecting mine next to yours." },
+      { byUsername: "seed-wren", afterHours: 3, text: "come back when it has a story. meanwhile, stitched and warm." },
+    ],
+  ],
+  [
+    "seed-sallow",
+    [
+      { byUsername: "seed-ollar", afterHours: 2, text: "one thumb at 3:14am. a full report from the far side of tired." },
+      { byUsername: "seed-quillight", afterHours: 1, text: "pauses are endings in training. hi, small stranger." },
+    ],
+  ],
+]);
 
 const CHIPS_SEEDS = [
   {
     username: "seed-wren",
-    date: "2026-10-19 22:14:00",
+    ageHours: 52, // wrote the night before last, when the lab let out
     tags: ["melancholy", "late night"],
-    text: `Today I watched my grandfather's old chair get carried out. It left a rectangle of cleaner carpet behind, like a photograph of where it sat for forty years. I keep walking past the empty space and my body still moves to avoid it.
-I know it's just a chair. I know that nobody besides me will notice the rectangle. But tonight the house feels like it's holding its breath, and so am I. Maybe the rectangle is where I put the years I didn't visit. I'll vacuum around it anyway, out of respect.`,
+    text: `The photo lab closes at midnight, and last week I finally dropped off my grandmother's rolls of film, ten years after her funeral. The clerk apologized for the four-day wait, as if for me it hadn't already been much longer than that.
+Year after year I meant to do it, and it turns out the longest distance was between the drawer where she kept the rolls and the counter where I finally stood. Tomorrow I'll see her photograph a hotel courtyard in 1998 for the very first time. I've carried this errand for a decade, I think, because finishing it would mean the story is over. The late bus is warm and nobody is looking at me. I'll collect them anyway.`,
   },
   {
     username: "seed-verity",
-    date: "2026-10-20 07:52:00",
+    ageHours: 46,
     tags: ["hopeful", "small joys"],
-    text: `There is a man at the bus stop who brings a thermos and pours a cup for whoever shivers next to him. He never asks names. This morning it was my turn, black with one sugar, exactly right.
-I don't know how to describe the hope I get from being guessed at by a stranger. The world has more quiet caretakers than the internet says. I want to be one of them on purpose now, not by accident.`,
+    text: `I failed my driving test for the second time on Tuesday, which means I'm finally allowed to be funny about it. The examiner said "you hesitate at roundabouts," and I said thank you — I hesitate at roundabouts, at telephones, at telling people what I want.
+This morning the community garden gave me the plot nobody wanted, all thistles and yesterday's plastic forks. I pulled the first thistle bare-handed, like a person who has decided something. There is a rabbit watching me work from behind the compost with professional interest. The first sunflower went in crooked; I left it crooked on purpose, its own little crooked flag.`,
   },
   {
     username: "seed-marrow",
-    date: "2026-10-20 23:59:00",
-    tags: ["tired"],
-    text: `Third double shift this week. My legs ache like borrowed laundry, and my name badge says the wrong name again and I just let it.
-A customer tonight said "you look like you've seen a whole winter." I almost cried at how chosen that sentence was, for my face, from a stranger. I am more tired than my answers let on. That's all. Good night, me.`,
+    ageHours: 40,
+    tags: ["tired", "work"],
+    text: `Hospital housekeeping, night rotation. I have mopped the same hallway for eleven years, and every night it tells me something different. Tonight a man in room 9 held my wrist while I changed the bin and said, "you people held everything up." I think he meant a much bigger year, but I'll take it personally, in the good way.
+My feet have opinions by 3am. Down the corridor someone's TV laughs the same game-show laugh every twenty minutes, and I know that episode by heart. I used to think tired would feel like defeat. At this hour it feels more like having carried something heavy a long way and setting it down by choice. The bus driver wished me a quiet morning, which is the correct blessing for people like us.`,
   },
   {
     username: "seed-ollar",
-    date: "2026-10-21 06:37:00",
-    tags: ["family", "small joys"],
-    text: `My sister taught my mother to send voice notes, and now 7am arrives with three minutes of yelling and a score update about a garden. My mother ends every message the same way: "okay, love, the kettle's calling me."
-I used to roll my eyes at the kettle line. Today I saved the last one. The kettle line is how she says I love you, apparently. It only took the third continent and a few skipped calls to hear it.`,
+    ageHours: 34,
+    tags: ["family", "melancholy"],
+    text: `My brother and I split the childhood bookshelf today, down the middle, like a border treaty between two adults who once shared a bunk bed. In one of my old novels there is our father's handwriting — he underlined the same three sentences that I underlined, unknowingly, twenty years later.
+We sat on the floor of my old room, laughing, and then not laughing. He took the atlas; I took the atlas of everything else. I don't know what to do with proof that we were once the same person. Maybe that's what family is for: someone who underlined your sentences before you did.`,
   },
   {
     username: "seed-quillight",
-    date: "2026-10-22 00:31:00",
+    ageHours: 28,
     tags: ["work", "hopeful", "late night"],
-    text: `I rewrote a resignation letter nine times tonight and deleted it nine times, which is more honesty than last year allowed me.
-The office lights stay on all night in this part of the city, and I used to think that was ambition. Now I think half of them are people rewriting letters. Tomorrow I will not send it. The day after, maybe I will. Interesting how "no" is mostly a scheduling problem. Walking home now, 12:31, the bakery is already lifting shutters for people I will always admire slightly.`,
+    text: `Day four at the new place. I sent the letter, eleven months after writing the first draft on my phone in a parking garage. Nobody shouted. Somebody brought cake, because somebody in every workplace brings cake when the lights have been on too late for too long.
+Here the lights go off at six and everyone actually leaves. I keep catching myself standing up the way I used to stand up — like an escape, not like a lunch break. My badge has my name spelled right this time, which sounds small and isn't. Tonight I stayed late only because a paragraph was walking around in me looking for paper. I think I might be allowed to like work. The night bus hums like it agrees.`,
+  },
+  {
+    username: "seed-fernway",
+    ageHours: 20,
+    tags: ["small joys"],
+    text: `The man at the corner shop keeps my usual loaf and two eggs set aside behind the counter on Thursdays, because by my second week he had learned my rhythm without asking. He calls it a reservation. It costs exactly the same as any other loaf, and it tastes like being expected.
+The umbrella maker returned the repair stitched, and wouldn't charge: "bring it back when it has a story." I laughed the whole way to the tram. Small joys are the ones that never made it into the plan. I've started a collection — warm doors, paper bags, being awaited somewhere.`,
+  },
+  {
+    username: "seed-sallow",
+    ageHours: 7,
+    tags: ["family", "tired"],
+    text: `3:14am. Fed her at 3:14 and 7:02 — she sleeps with one hand open like a question mark. Writing this with one thumb, her whole weight asleep on my chest, both of us breathing each other in.
+My partner sleeps through the small alarms; ten years of night shifts earn that, and somebody in this family deserves the sleep even if tonight it isn't me. People say the nights are long. They are, and they'll be long again, and the pillow smells like her head, so I'm not filing a complaint. I don't have an ending for this entry. We're new here. New strangers don't get endings, only pauses.`,
   },
 ];
 
 export function seedIfEmpty(db) {
-  const count = db.prepare("SELECT COUNT(*) AS n FROM accounts").get().n;
-  if (count > 0) return;
-
   const insertAccount = db.prepare(
     `INSERT INTO accounts (username, password_hash, password_salt, is_seed) VALUES (?, ?, ?, 1)`
   );
@@ -60,40 +192,68 @@ export function seedIfEmpty(db) {
   const insertHeart = db.prepare(
     `INSERT INTO hearts (entry_id, sentence_index, account_id) VALUES (?, ?, ?)`
   );
+  const findAccount = db.prepare(`SELECT id FROM accounts WHERE username = ?`);
+  const findEntryFor = db.prepare(`SELECT id FROM entries WHERE account_id = ?`);
 
   const tx = db.transaction(() => {
-    const ids = CHIPS_SEEDS.map((s) => {
-      // Seeds aren't meant to log in; give them unusable passwords.
+    // — pass 1: birth any missing stranger (unusable passwords: seeds don't log in) —
+    const ids = new Map();
+    for (const chip of CHIPS_SEEDS) {
+      const row = findAccount.get(chip.username);
+      if (row) {
+        ids.set(chip.username, row.id);
+        continue;
+      }
       const { hash, salt } = hashPassword(randomBytes(24).toString("hex"));
-      return { chip: s, id: insertAccount.run(s.username, hash, salt).lastInsertRowid };
-    });
-
-    for (const { chip, id } of ids) {
-      const sentences = JSON.stringify(splitSentences(chip.text));
-      insertEntry.run(id, chip.text, sentences, JSON.stringify(chip.tags), chip.date);
+      ids.set(chip.username, insertAccount.run(chip.username, hash, salt).lastInsertRowid);
     }
 
-    // A few warm anonymous comments between seeds (entry_id renders without names).
-    insertComment.run(1, 2, "The rectangle. I know that rectangle. Holding you gently, stranger.", "2026-10-20 10:05:00");
-    insertComment.run(1, 4, "Vacuum around it. Grief keeps its own small furniture.", "2026-10-20 12:41:00");
-    insertComment.run(2, 5, "One sugar, exactly right? That's a person paying attention with a spoon.", "2026-10-20 08:30:00");
-    insertComment.run(2, 1, "Be the thermos. Stealing this.", "2026-10-20 09:12:00");
-    insertComment.run(3, 3, "a whole winter, seen and still standing. respect.", "2026-10-21 01:02:00");
-    insertComment.run(4, 2, "The kettle line undid me. Saving it too.", "2026-10-21 11:47:00");
-    insertComment.run(5, 3, "12:31. The bakery people see everything first. Rooting for letter number ten.", "2026-10-22 02:15:00");
+    // — pass 2: entries for any seed writer who has none; collate reactions —
+    const heartPlans = []; // { entryId, sentenceIndex, byAccountId }
+    const notePlans = []; // { entryId, byAccountId, text, created_at }
 
-    // Sprinkled sentence hearts so counts look alive.
-    insertHeart.run(1, 0, 3);
-    insertHeart.run(1, 2, 2);
-    insertHeart.run(1, 2, 5);
-    insertHeart.run(2, 1, 4);
-    insertHeart.run(2, 3, 1);
-    insertHeart.run(2, 3, 3);
-    insertHeart.run(3, 0, 1);
-    insertHeart.run(4, 2, 5);
-    insertHeart.run(5, 3, 2);
-    insertHeart.run(5, 4, 4);
-    insertHeart.run(5, 4, 1);
+    for (const chip of CHIPS_SEEDS) {
+      const accountId = ids.get(chip.username);
+      if (findEntryFor.get(accountId)) continue;
+
+      const sentences = splitSentences(chip.text);
+      const entryId = insertEntry.run(
+        accountId,
+        chip.text,
+        JSON.stringify(sentences),
+        JSON.stringify(chip.tags),
+        dt(chip.ageHours)
+      ).lastInsertRowid;
+
+      const notes = noteDrafts.get(chip.username) || [];
+      for (const n of notes) {
+        notePlans.push({
+          entryId,
+          byAccountId: ids.get(n.byUsername),
+          text: n.text,
+          created_at: dt(chip.ageHours - n.afterHours), // younger than the entry
+        });
+      }
+
+      for (const h of heartShouts.get(chip.username) || []) {
+        const idx = sentences.findIndex((s) => s.includes(h.snippet));
+        if (idx === -1) {
+          throw new Error(`seed heart snippet not found in ${chip.username}'s entry: "${h.snippet}"`);
+        }
+        heartPlans.push({ entryId, sentenceIndex: idx, byAccountId: ids.get(h.byUsername) });
+      }
+    }
+
+    // — pass 3: commit collated reactions —
+    for (const n of notePlans) {
+      insertComment.run(n.entryId, n.byAccountId, n.text, n.created_at);
+    }
+    for (const h of heartPlans) {
+      insertHeart.run(h.entryId, h.sentenceIndex, h.byAccountId);
+    }
+
+    return { heartPlans: heartPlans.length, notePlans: notePlans.length };
   });
-  tx();
+
+  return tx();
 }
