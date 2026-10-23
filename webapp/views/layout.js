@@ -11,7 +11,10 @@ export function esc(s) {
     .replaceAll("'", "&#39;");
 }
 
-export function layout({ body, extraClass = "" }) {
+export function layout({ body, extraClass = "", account = null }) {
+  const authNav = account
+    ? `<form method="post" action="/logout" class="nav-form"><button class="masthead-link" type="submit">log out</button></form>`
+    : `<a class="masthead-link" href="/login">log in</a>`;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -24,6 +27,7 @@ export function layout({ body, extraClass = "" }) {
   <header class="masthead">
     <a class="masthead-title" href="/">Diary of a Stranger</a>
     <span class="masthead-sub">you are reading someone's latest page</span>
+    <span class="masthead-nav">${authNav}</span>
   </header>
   <main>${body}</main>
   <footer class="colophon">entries are anonymous by design · the pool is small tonight</footer>

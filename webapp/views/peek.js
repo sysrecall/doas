@@ -43,13 +43,13 @@ function entryBody(entry) {
 }
 
 export function renderPeek(entry, opts = {}) {
-  const { activeTag = null, whisperTag = null } = opts;
+  const { activeTag = null, whisperTag = null, account = null } = opts;
   const body = `${chipRow(activeTag)}${
     entry
       ? entryBody(entry)
       : `<div class="empty-whisper">the library ran out for tonight — nobody's latest page remains. come back when someone writes.</div>`
   }${whisperTag ? whisper(whisperTag) : ""}`;
-  return layout({ body, extraClass: "page-peek" });
+  return layout({ body, extraClass: "page-peek", account });
 }
 
 function chipRow(activeTag) {

@@ -10,6 +10,6 @@ export function mountPeek(app) {
     const whisperTag = activeTag && !entry ? activeTag : null;
     // Empty match falls back to random AND the whisper — both, never one alone (PRD rule).
     if (!entry && whisperTag) entry = chooseEntry({ excludeId });
-    res.send(renderPeek(entry, { activeTag, whisperTag }));
+    res.send(renderPeek(entry, { activeTag, whisperTag, account: req.account }));
   });
 }
