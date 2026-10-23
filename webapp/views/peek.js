@@ -3,12 +3,13 @@
 
 import { layout, esc } from "./layout.js";
 import { entryBody } from "./entry.js";
+import { CHIPS } from "../lib/chips.js";
 
 export function renderPeek(entry, opts = {}) {
   const { activeTag = null, whisperTag = null, account = null, commentError = null } = opts;
   const body = `${chipRow(activeTag)}${
     entry
-      ? entryBody(entry, { account, commentError })
+      ? entryBody(entry, { account, commentError, activeTag })
       : `<div class="empty-whisper">the library ran out for tonight — nobody's latest page remains. come back when someone writes.</div>`
   }${whisperTag ? whisper(whisperTag) : ""}`;
   return layout({ body, extraClass: "page-peek", account });
@@ -17,7 +18,7 @@ export function renderPeek(entry, opts = {}) {
 function chipRow(activeTag) {
   // Learner-confirmed starter set (prd.md > The peek, resolved at review).
   // Chips are plain links — no SPA magic; the active chip links back to unfiltered random.
-  const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work", "small joys"];
+  // One shared vocabulary lives in lib/chips.js (views render, routes validate).
   const chips = CHIPS.map((c) => {
     const active = activeTag === c;
     const href = active ? "/" : `/?tag=${encodeURIComponent(c)}`;

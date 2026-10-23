@@ -13,20 +13,14 @@ import { verifyOrCreateAccount, publishEntry } from "../db.js";
 import { findBannedWord, refusalLine } from "../lib/banned.js";
 import { credentialFailureLine } from "../lib/auth.js";
 
-// The seven chips are the pool's whole filter language (learner-confirmed set).
-// Obsidian tags matching these (case-insensitive) become chips; all other tags
-// are ignored — no fuzzy guessing layer (spec decision).
-const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work", "small joys"];
+import { CHIPS } from "../lib/chips.js";
 
 export function normalizeTags(raw) {
   const list = Array.isArray(raw) ? raw : [];
   const hit = new Set();
   for (const t of list) {
-    const cleaned = String(t)
-      .trim()
-      .replace(/^#/, "")
-      .toLowerCase();
-    if (CHIPS.includes(cleaned)) hit.add(cleaned);
+    const cleaned = normalizeTag(t);
+    if (cleaned) hit.add(cleaned);
   }
   return [...hit];
 }

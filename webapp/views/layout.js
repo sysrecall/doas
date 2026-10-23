@@ -26,7 +26,7 @@ export function layout({ body, extraClass = "", account = null }) {
 <body class="${esc(extraClass)}">
   <header class="masthead">
     <a class="masthead-title" href="/">Diary of a Stranger</a>
-    <span class="masthead-sub">you are reading someone's latest page</span>
+    <span class="masthead-sub">you are reading someone's diary</span>
     <span class="masthead-nav">${authNav}</span>
   </header>
   <main>${body}</main>

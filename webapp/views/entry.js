@@ -3,7 +3,14 @@
 
 import { esc, relativeTime } from "./layout.js";
 
-export function entryBody(entry, { account = null, commentError = null, mineView = false } = {}) {
+export function entryBody(entry, { account = null, commentError = null, mineView = false, activeTag = null } = {}) {
+  // The active chip rides along: next-link keeps the filter, and hidden form
+  // fields carry it through heart/comment posts so the return view stays filtered.
+  const tagQ = activeTag ? `&tag=${encodeURIComponent(activeTag)}` : "";
+  const tagHidden = activeTag
+    ? `<input type="hidden" name="tag" value="${esc(activeTag)}" />`
+    : "";
+  const nextHref = `/?after=${entry.id}${tagQ}`;
   const tags = entry.tags.map((t) => `<span class="tag-chip">${esc(t)}</span>`).join("");
   const sentences = entry.sentences
     .map((s, i) => {
@@ -11,7 +18,7 @@ export function entryBody(entry, { account = null, commentError = null, mineView
       const count = n > 0 ? `<span class="heart-count">♥ ${n}</span>` : "";
       // The kernel: hearts attach to sentences, offered only through the permission door.
       const heart = account
-        ? `<form class="heart-form" method="post" action="/hearts"><input type="hidden" name="entryId" value="${entry.id}" /><input type="hidden" name="sentenceIndex" value="${i}" /><button class="heart-button" type="submit" title="heart this sentence" aria-label="heart this sentence">♥</button></form>`
+        ? `<form class="heart-form" method="post" action="/hearts"><input type="hidden" name="entryId" value="${entry.id}" /><input type="hidden" name="sentenceIndex" value="${i}" />${tagHidden}<button class="heart-button" type="submit" title="heart this sentence" aria-label="heart this sentence">♥</button></form>`
         : "";
       return `<span class="sentence">${esc(s)}${count}${heart}</span> `;
     })
@@ -26,9 +33,9 @@ export function entryBody(entry, { account = null, commentError = null, mineView
 
   const commentForm = account
     ? `<form class="comment-form" method="post" action="/comments">
-        <input type="hidden" name="entryId" value="${entry.id}" />
+        <input type="hidden" name="entryId" value="${entry.id}" />${tagHidden}
         <input class="comment-input" name="text" maxlength="140" placeholder="say one small thing — 140 characters, no name attached" required />
-        <button class="comment-button" type="submit">leave it</button>
+        <button class="comment-button" type="submit">leave a note</button>
       </form>`
     : `<p class="comment-invite"><a href="/login?next=${encodeURIComponent(
         mineView ? "/mine" : `/?entry=${entry.id}`
@@ -51,7 +58,7 @@ export function entryBody(entry, { account = null, commentError = null, mineView
     ${
       mineView
         ? ""
-        : `<nav class="next"><a class="next-link" href="/?after=${entry.id}">turn to another stranger →</a></nav>`
+        : `<nav class="next"><a class="next-link" href="${nextHref}">turn to another stranger →</a></nav>`
     }
   </article>`;
 }
