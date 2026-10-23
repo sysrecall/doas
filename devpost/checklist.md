@@ -128,3 +128,16 @@ Activity mode: live app + editor (learner's machine; pool running at `localhost:
 - The publish preview modal is now `.open()`ed after construction (`new PublishModal(...)` alone shows nothing in Obsidian and fails silently) — your console trail (`publish flow started` → `diary folder … found` → nothing) pinned every attempted publish to exactly the modal step with no error, because the preview was never opened and the send path was never reached.
 
 - Added an opt-in **Auto publish** setting (off by default; manual preview path untouched) — learner requested during kick-the-tires: publish the newest diary note once at Obsidian startup and after a quiet period post-editing, no preview, identical-content skips, refusals still surfaced. Deliberate tradeoff recorded rather than hidden in code: auto-publish intentionally bypasses the "writer approves what goes out" preview, and the writer opts into that.
+- The seed pool was rebuilt (7 strangers for 7 chips, relative timestamps computed at seed time, all texts rewritten as lived-in diary voices) — hardcoded dates would have made the demo pool read "stale entries from last week", and one-writer chips meant several filters could draw the same entry repeatedly.
+- Republish now clears a stale report-hiding flag — publishing replaces the row's text in place, so a report against the OLD text would have kept the writer's genuinely republished note invisible in draws forever.
+- Native Obsidian tags now flow into publication and the writer's checkboxes became the final word on the payload — real publishing revealed two defects: Obsidian's inline tags can't contain spaces (writers use hyphens, `#small-joys`), so exact-match chip detection silently missed them; and the send path merged the note's found tags back in even after the writer unchecked them. Fix: one shared chip-vocabulary module (imported by both the pool and the plugin bundle), and the preview's checkboxes are the single source of the sent tags. (0.3.1)
+
+## Ship
+
+- [x] GitHub repository created and pushed by the learner — `git@github.com:sysrecall/doas.git`; `main` synced at `8ef8094` (seed-pool refresh, hidden-flag fix, native-tag fixes all included)
+- [x] Privacy verification before publish — whole-history scan finds no database, no backups, no `learner-profile.md`, no bundle artifact, no secrets anywhere in the pushed tree; real user data (`john`, session rows, password hashes) lives only in the gitignored local db
+- [ ] **Repository visible without auth** — learner verified it exists on github.com while logged in; visibility flip to public pending (24.10 record: unauthenticated web + API both 404, i.e. currently private). MUST be public before the Devpost submission links it
+- [ ] Demo video recorded and linked
+- [ ] Devpost submission fields authored by the learner; exit survey answered; submission sent
+
+- Note: the three planning docs (`devpost/scope.md`, `prd.md`, `spec.md`) remain deliberately untracked; staging them for the repo is the learner's call at publish time (privacy-reviewed and safe).
