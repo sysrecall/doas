@@ -87,6 +87,16 @@ try {
   });
   check("POST with Origin app://obsidian.md → 200 ok", crossOrigin.status === 200 && crossOrigin.data?.ok === true);
 
+  // 0c — a malformed body gets a quiet JSON 400, never a stack trace or engine header.
+  const badBody = await fetch(`${BASE}/api/publish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "app://obsidian.md" },
+    body: "{not json",
+  });
+  const badData = await badBody.json().catch(() => ({}));
+  check("invalid JSON → quiet 400 JSON", badBody.status === 400 && badData?.ok === false);
+  check("responses carry no engine header", badBody.headers.get("x-powered-by") === null);
+
   // 1 — first publish: creates the account and the entry, in one motion.
   const v1 = await publish({
     ...creds,

@@ -24,7 +24,7 @@ const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work",
 
 // Windows/desktop builds: manifest and bundle are versioned together; the
 // Community plugins panel shows this, so a stale copy is immediately visible.
-const VERSION = "0.2.1";
+const VERSION = "0.3.0";
 
 // How long the writing must go quiet before an auto-publish fires. Diaries
 // breathe slowly; every keystroke must not be a publish (kernel cost: each
@@ -203,7 +203,7 @@ class PublishModal extends Modal {
       // network failures, refusals, AND crashes (real-world lesson).
       Promise.resolve(this.onPublish(picked)).catch((e: any) => {
         console.log(`[DoaS v${VERSION}] send path CRASHED: ${e?.message ?? e}`);
-        new Notice(`Publishing crashed mid-send: ${e?.message ?? e}`);
+        new Notice("Publishing didn't happen this time — try again in a moment.");
       });
     });
   }
@@ -228,8 +228,12 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       id: "publish-latest",
       name: "Publish to Diary of a Stranger",
       callback: () => {
-        // Any crash inside the flow becomes a visible Notice, never a mystery.
-        this.publishFlow().catch((e) => new Notice(`Publish stopped early: ${e?.message ?? e}`));
+        // Any crash inside the flow becomes a visible Notice, never a mystery —
+        // and never raw technical text: the console keeps the cause.
+        this.publishFlow().catch((e: any) => {
+          console.log(`[DoaS v${VERSION}] flow CRASHED: ${e?.message ?? e}`);
+          new Notice("Publish didn't happen this time — try again in a moment.");
+        });
       },
     });
 
@@ -419,9 +423,10 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       });
       console.log(`[DoaS v${VERSION}] pool answered: status ${resp.status}`);
     } catch (e: any) {
-      // The only throw here is the network itself.
+      // The only throw here is the network itself. Technical detail lives in
+      // the console; the writer gets calm words (production polish).
       console.log(`[DoaS v${VERSION}] request to pool REJECTED: ${e?.message ?? e}`);
-      new Notice(`Is the diary pool running? The request to ${pool} failed — ${e?.message ?? e}`);
+      new Notice(`Is the diary pool running? The request didn't get through.`);
       return false;
     }
 
@@ -435,8 +440,8 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
     if (resp.status === 200 && data?.ok) {
       new Notice(
         auto
-          ? `Auto-published — your newest entry is in the pool (${pool}${data.payoffPath ?? "/mine"}).`
-          : `Published — ${data.createdAccount ? "your account just came into being. " : ""}Peek at ${pool}${data.payoffPath ?? "/mine"} to see hearts land.`
+          ? "Auto-published. Your page holds your newest entry."
+          : `Published. Your newest entry is in the pool${data.createdAccount ? " — your account just came into being" : ""}, and 'your page' shows the hearts as they arrive.`
       );
       return true;
     }
@@ -444,7 +449,8 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       new Notice(data.error);
       return false;
     }
-    new Notice(`The pool couldn't publish that (status ${resp.status}).`);
+    console.log(`[DoaS v${VERSION}] pool answered ${resp.status} without an ok`);
+    new Notice("The pool couldn't publish that this time. Try again in a moment.");
     return false;
   }
 }

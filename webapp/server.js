@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { migrate, db } from "./db.js";
 import { seedIfEmpty } from "./seed.js";
 import { sessionMiddleware } from "./lib/auth.js";
+import { layout } from "./views/layout.js";
 import { mountPeek } from "./routes/peek.js";
 import { mountAuth } from "./routes/auth.js";
 import { mountReactions } from "./routes/reactions.js";
@@ -18,6 +19,7 @@ migrate();
 seedIfEmpty(db);
 
 const app = express();
+app.disable("x-powered-by"); // production hygiene — the stack stays ours, not theirs
 app.use(express.urlencoded({ extended: false })); // form posts (slices 4+)
 app.use(express.json()); // the plugin's publish contract (slice 5+)
 
@@ -51,6 +53,25 @@ mountPublish(app);
 mountMine(app);
 mountReports(app);
 mountModeration(app);
+
+// Final guardrail (production polish): an unexpected fault renders quietly —
+// plain JSON for the plugin, a plain warm page for people, never a stack.
+// The technical truth stays in the pool's own console.
+app.use((err, req, res, next) => {
+  const status = Number.isInteger(err?.status) && err.status >= 400 && err.status < 500 ? err.status : 500;
+  const friendly = err?.type === "entity.parse.failed" ? "That wasn't valid JSON." : "The pool fumbled that one — try again in a moment.";
+  console.log(`[pool] ${status} · ${req.method} ${req.url} · ${err?.message ?? err}`);
+  if (req.path.startsWith("/api")) {
+    res.status(status).json({ ok: false, error: friendly });
+    return;
+  }
+  res.status(status).send(
+    layout({
+      extraClass: "page-fault",
+      body: `<div class="empty-whisper">the pool hit a snag — try again in a moment. the librarians have been noted.</div>`,
+    })
+  );
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
