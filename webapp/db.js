@@ -6,7 +6,8 @@ import { splitSentences } from "./lib/sentences.js";
 import { hashPassword, verifyPassword } from "./lib/auth.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(here, "data");
+// DIARY_DATA_DIR lets the contract test run against a scratch pool (devpost/checks).
+const dataDir = process.env.DIARY_DATA_DIR || join(here, "data");
 mkdirSync(dataDir, { recursive: true });
 
 export const db = new Database(join(dataDir, "diary_pool.db"));

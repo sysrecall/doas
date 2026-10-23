@@ -1,0 +1,55 @@
+/* Obsidian plugin styles: the publish preview modal.
+   Inheriting Obsidian's own modal chrome (per spec > Look and Feel);
+   only gentle warm accents added. */
+
+.das-preview {
+  font-family: var(--font-text, Georgia, serif);
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  border: 1px solid rgba(120, 90, 40, 0.25);
+  border-radius: 4px;
+  background: rgba(232, 200, 150, 0.12);
+  padding: 0.8em 1em;
+  margin-bottom: 1em;
+  color: inherit;
+}
+
+.das-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-bottom: 1em;
+}
+
+.das-check {
+  border: 1px solid rgba(120, 90, 40, 0.3);
+  border-radius: 999px;
+  padding: 0.15em 0.8em;
+  font-size: 0.85em;
+  display: inline-flex;
+  gap: 0.35em;
+  align-items: center;
+  cursor: pointer;
+}
+
+.das-check.is-active {
+  background: rgba(232, 192, 125, 0.3);
+  border-color: rgba(120, 90, 40, 0.55);
+}
+
+.das-check input {
+  margin: 0;
+}
+
+.das-actions {
+  display: flex;
+  gap: 0.6em;
+  justify-content: flex-end;
+}
+
+.das-source {
+  color: var(--text-muted, #777);
+  font-size: 0.82em;
+  margin-bottom: 0.6em;
+}
