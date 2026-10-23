@@ -17,14 +17,15 @@ import {
   RequestUrlResponse,
 } from "obsidian";
 
-// The pool's whole filter language (learner-confirmed set). Kept in step with
-// webapp/routes/publish.js — normalizeTags there is the authority; this copy
-// only pre-lights the checkboxes the writer sees in the preview.
-const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work", "small joys"] as const;
+// Chip vocabulary and normalization come from ONE shared file the pool server
+// uses too (webapp/lib/chips.js) — bundled in here so both sides spell the
+// seven chips identically and refuse the same unknowns. This plugin never
+// edits that source of truth; unchecking a mood checkbox is final everywhere.
+import { CHIPS, normalizeTag } from "../webapp/lib/chips.js";
 
 // Windows/desktop builds: manifest and bundle are versioned together; the
 // Community plugins panel shows this, so a stale copy is immediately visible.
-const VERSION = "0.3.0";
+const VERSION = "0.3.1";
 
 // How long the writing must go quiet before an auto-publish fires. Diaries
 // breathe slowly; every keystroke must not be a publish (kernel cost: each
@@ -34,7 +35,9 @@ const AUTO_DELAY_MS = 3 * 60 * 1000;
 // save action), so "on save" means a short pause with intent — a few seconds.
 const QUICK_DELAY_MS = 5 * 1000;
 
-type Chip = (typeof CHIPS)[number];
+// Chips are runtime-validated through normalizeTag / the modal's labels, so
+// typing stays honest at the data boundary.
+type Chip = string;
 
 interface DiaryOfAStrangerSettings {
   poolAddress: string;
@@ -87,6 +90,9 @@ function stripFrontmatter(content: string): { body: string; fmTags: string[] } {
   return { body, fmTags: tags };
 }
 
+// Anything the note marks (frontmatter `tags:`, inline `#tags`) that speaks the
+// pool's language becomes a chip; obsidian-native spellings like "#small-joys"
+// normalize like the server would. Unknown tags stay unknown — never guessed.
 function inlineHashtags(body: string): string[] {
   const out: string[] = [];
   const re = /(^|[\s(])#([\p{L}\p{N}_/-]+)/gu;
@@ -100,8 +106,8 @@ export function chipsFromNote(content: string): Chip[] {
   const raw = [...fmTags, ...inlineHashtags(body)];
   const hit = new Set<Chip>();
   for (const t of raw) {
-    const clean = t.trim().replace(/^#/, "").toLowerCase();
-    if ((CHIPS as readonly string[]).includes(clean)) hit.add(clean as Chip);
+    const chip = normalizeTag(t);
+    if (chip) hit.add(chip as Chip);
   }
   return [...hit];
 }
@@ -175,8 +181,8 @@ class PublishModal extends Modal {
     //The writer approves exactly what goes out — the private things never leave.
 
     const nativeLine =
-      this.native.length > 0 ? ` (found in your note: ${this.native.map((t) => "#" + t).join(", ")})` : "";
-    contentEl.createEl("div", { cls: "das-source", text: `moods for the pool ${nativeLine}` });
+      this.native.length > 0 ? ` — pre-checked, found in your note: ${this.native.join(", ")}` : "";
+    contentEl.createEl("div", { cls: "das-source", text: `moods for the pool${nativeLine}` });
 
     const checks = contentEl.createEl("div", { cls: "das-checks" });
     const boxes: HTMLInputElement[] = CHIPS.map((chip) => {
@@ -397,7 +403,10 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
       text: body.trim(),
       native,
       poolAddress: this.settings.poolAddress,
-      onPublish: (picked) => this.sendToPool(note, body.trim(), Array.from(new Set([...native, ...picked]))),
+      // The checkboxes are the FINAL word: native tags pre-check themselves,
+      // but unchecking one means it truly doesn't go out. No merge behind the
+      // writer's back — the writer approves exactly what leaves.
+      onPublish: (picked) => this.sendToPool(note, body.trim(), picked),
     }).open();
   }
 
