@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Diary of a Stranger — App Map</title>
+<style>
+  :root { --paper:#f3e9d7; --deep:#ecdfc9; --ink:#2f2821; --soft:#6b5d4f; --rule:#d8c6ab; --lamp:#e8c07d; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:2rem 1rem 3rem; background:var(--paper); color:var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; line-height:1.7; }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-weight: 400; letter-spacing: .01em; margin: 0 0 .2rem; }
+  h2 { font-weight: 400; font-size: 1.15rem; border-bottom: 1px solid var(--rule); padding-bottom: .2rem; margin-top: 2rem; }
+  p { margin: .5rem 0; }
+  .sub { color: var(--soft); font-style: italic; margin-bottom: 1.4rem; }
+  .card { background: var(--deep); border:1px solid var(--rule); border-radius:4px; padding: .9rem 1.1rem; margin: .8rem 0; }
+  code { background: rgba(232,192,125,.25); border:1px solid var(--rule); border-radius:3px;
+    padding: .05rem .4rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.86em; }
+  pre { background:#2f2821; color:#f3e9d7; border-radius:4px; padding:.8rem 1rem; overflow:auto; }
+  pre code { background:none; border:0; color:inherit; padding:0; }
+  a { color: var(--soft); }
+  details { border:1px solid var(--rule); border-radius:4px; margin:.6rem 0; background:var(--deep); }
+  details summary { cursor:pointer; padding:.55rem .9rem; }
+  details[open] { padding-bottom:.5rem; }
+  details > *:not(summary) { margin-left:.9rem; margin-right:.9rem; }
+  svg { max-width:100%; height:auto; display:block; margin:.8rem 0; }
+  table { border-collapse: collapse; width:100%; font-size:.95rem; }
+  td, th { border:1px solid var(--rule); padding:.4rem .7rem; text-align:left; vertical-align: top; }
+  th { background: var(--deep); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Diary of a Stranger — App Map</h1>
+<p class="sub">A quiet pool of strangers' latest diary pages. Snapshot of the code at commit
+<code>HEAD&nbsp;≈&nbsp;268bf5b</code> — it may drift from the repository as the project changes beyond this point.</p>
+
+<h2>What the app is, in three pieces</h2>
+<p><strong>The pool</strong> — a Node/Express server with a SQLite file (<code>webapp/</code>): it stores
+writers' <em>latest</em> entry only (one row per account), serves random anonymous "peeks", and holds sentence-level
+hearts, ≤140-char comments, reports and a moderation desk. No JavaScript is sent to readers — everything is
+server-rendered forms.</p>
+<p><strong>The plugin</strong> — an Obsidian plugin (<code>plugin/</code>) with one command and four settings
+(pool address, diary folder, username, password). It picks your newest diary note, shows a preview with mood-chip
+toggles, and sends it a wall POST to the pool. Optional auto-publish (on start, and on/after saves).</p>
+<p><strong>The contract</strong> — the point the two meet: <code>POST /api/publish</code>. Its exact behavior is
+machine-checked by <code>npm test</code> against a throwaway pool, so the plugin and the server can drift safely apart.</p>
+
+<h2>One action, followed through</h2>
+<p>You publish a note in Obsidian. Where does it travel?</p>
+
+<svg viewBox="0 0 860 220" role="img" aria-label="Flow: Obsidian note, plugin sendToPool, POST /api/publish, publishEntry stores one row, readers peek and react">
+  <style>
+    .bx { fill: #ecdfc9; stroke: #6b5d4f; stroke-width: 1.2; rx: 4; }
+    .lb { font-family: Georgia, serif; font-size: 13px; fill: #2f2821; }
+    .cd { font-family: Menlo, monospace; font-size: 11px; fill: #6b5d4f; }
+    .ar { stroke: #6b5d4f; stroke-width: 1.4; marker-end: url(#ah); fill: none; }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b5d4f"/>
+    </marker>
+  </defs>
+  <rect class="bx" x="10"  y="60" width="150" height="52" rx="4"/>
+  <text class="lb" x="26" y="82">Your note in Obsidian</text>
+  <text class="cd" x="26" y="100">newest in diary folder</text>
+
+  <rect class="bx" x="200" y="60" width="180" height="52" rx="4"/>
+  <text class="lb" x="216" y="82">plugin · sendToPool</text>
+  <text class="cd" x="216" y="100">plugin/main.ts</text>
+
+  <rect class="bx" x="420" y="60" width="190" height="52" rx="4"/>
+  <text class="lb" x="436" y="82">POST /api/publish</text>
+  <text class="cd" x="436" y="100">webapp/routes/publish.js</text>
+
+  <rect class="bx" x="650" y="10" width="195" height="46" rx="4"/>
+  <text class="lb" x="664" y="32">db.js · publishEntry</text>
+  <text class="cd" x="664" y="50">one row per writer (UPSERT)</text>
+
+  <rect class="bx" x="650" y="110" width="195" height="46" rx="4"/>
+  <text class="lb" x="664" y="132">SQLite · entries</text>
+  <text class="cd" x="664" y="150">only the newest is public</text>
+
+  <rect class="bx" x="300" y="160" width="310" height="46" rx="4"/>
+  <text class="lb" x="316" y="182">readers: random peek · hearts · comments · /mine</text>
+  <text class="cd" x="316" y="200">webapp/views/entry.js</text>
+
+  <path class="ar" d="M160 86 L198 86"/>
+  <path class="ar" d="M380 86 L418 86"/>
+  <path class="ar" d="M615 86 C 640 80, 640 45, 645 38"/>
+  <path class="ar" d="M760 56 L760 108"/>
+  <path class="ar" d="M648 145 C 610 165, 615 180, 612 182"/>
+</svg>
+
+<h2>Reference route — 3 stops</h2>
+<table>
+  <tr><th>Stop</th><th>File · anchor</th><th>What belongs here</th></tr>
+  <tr><td>1. The send</td><td><code>plugin/main.ts</code> → search <code>sendToPool</code></td>
+      <td>Builds the publish request (username, password, text, tags). All failure paths end in a user-facing Notice; technical detail goes to the console breadcrumb line.</td></tr>
+  <tr><td>2. The wall of rules</td><td><code>webapp/routes/publish.js</code> → <code>normalizeTags</code>, then <code>webapp/db.js</code> → search <code>publishEntry</code></td>
+      <td>Shape check, ban check, verify-or-create account, and the structural rule: <code>UPDATE … WHERE account_id</code> else <code>INSERT</code> — no writer can ever have two public entries.</td></tr>
+  <tr><td>3. The result</td><td><code>webapp/routes/mine.js</code> and <code>webapp/views/entry.js</code> → search <code>entryBody</code></td>
+      <td>One query lands on the payoff page; the same <code>entryBody</code> renders every entry everywhere (peek, /mine, and the error re-renders), so anonymity and look stay consistent by construction.</td></tr>
+</table>
+
+<h2>To change something, start here</h2>
+<ul>
+  <li><strong>Comment length (140)</strong> → <code>webapp/routes/reactions.js</code>, <code>MAX_COMMENT</code> (and the placeholder text in <code>webapp/views/entry.js</code>).</li>
+  <li><strong>Ban list / refusal wording</strong> → <code>webapp/lib/banned.js</code>.</li>
+  <li><strong>The seven mood chips</strong> → <code>webapp/lib/chips.js</code> — then mirror the list in <code>plugin/main.ts</code> (<code>CHIPS</code>) so the preview pre-checks match.</li>
+  <li><strong>Wordings (masthead, footer, invites)</strong> → <code>webapp/views/layout.js</code> and the view files in <code>webapp/views/</code>.</li>
+  <li><strong>Plugin defaults or new settings</strong> → <code>plugin/main.ts</code>, <code>DEFAULT_SETTINGS</code>; rebuild with <code>npm run build:plugin</code>.</li>
+</ul>
+
+<h2>A practice to reuse</h2>
+<div class="card">
+<strong>Test the interface the way its consumer actually uses it.</strong>
+In this project the plugin and server are separate programs; a function-level test would have invited silent breakage.
+<code>devpost/checks/contract-test.mjs</code> instead replays the plugin's exact HTTP requests (success, replacement, wrong
+password, banned word, preflight CORS, malformed JSON) against a throwaway pool and asserts the pool's observable behavior —
+so when <code>npm test</code> is green, the plugin and server agree. When the chips refactor later missed importing
+<code>normalizeTag</code>, this test failed loudly (trace: commits <code>89b693f</code> → <code>3f4b4fb</code>) while
+typechecking stayed green. On any project with moving parts, prefer one such "rehearse the real request" test plus a
+short live probe over many speculative unit tests.
+</div>
+
+<h2>Run it again</h2>
+<pre><code>npm install
+npm start                 # pool at http://localhost:3000
+npm run build:plugin      # rebuilds plugin/main.js; copy plugin/main.js + manifest.json into your vault
+npm test                  # 18 contract checks against a throwaway pool</code></pre>
+<p><details>
+<summary>Quality snapshot taken with this map</summary>
+<p>18 contract checks passing · anonymity sweep (zero username leaks on all public pages) · newest-entry rule verified
+at the database level · moderation flow verified end to end · plugin publish proven from real Obsidian. The map is a
+static document: safe to open offline, no scripts, nothing phones home.</p>
+</details></p>
+
+</main>
+</body>
+</html>
