@@ -6,6 +6,7 @@ import { seedIfEmpty } from "./seed.js";
 import { sessionMiddleware } from "./lib/auth.js";
 import { mountPeek } from "./routes/peek.js";
 import { mountAuth } from "./routes/auth.js";
+import { mountReactions } from "./routes/reactions.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -19,6 +20,7 @@ app.use(sessionMiddleware(db)); // reads the session cookie into req.account
 
 mountPeek(app);
 mountAuth(app);
+mountReactions(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

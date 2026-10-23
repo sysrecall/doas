@@ -151,6 +151,80 @@ main {
 
 .next { margin-top: 1.8rem; text-align: center; }
 
+/* ---- heart buttons: the kernel's small offering ---- */
+
+.heart-form {
+  display: inline-block;
+  margin: 0 0 0 0.12rem;
+  vertical-align: super;
+}
+
+.heart-button {
+  background: none;
+  border: 0;
+  padding: 0 0.15rem;
+  color: var(--heart);
+  opacity: 0.55;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: var(--serif);
+  line-height: 1;
+}
+
+.heart-button:hover { opacity: 1; transform: scale(1.08); }
+
+/* ---- comments: the quiet note under someone's day ---- */
+
+.comment-form {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--serif);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+
+.comment-input:focus { outline: 1px solid var(--lamp); border-color: var(--lamp); }
+
+.comment-button {
+  padding: 0.42rem 0.9rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.comment-button:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+.comment-invite {
+  margin-top: 0.9rem;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-style: italic;
+}
+
+.comment-invite a { color: var(--ink); }
+
+.comment-error {
+  margin: 0.7rem 0 0;
+  color: var(--heart);
+  font-size: 0.88rem;
+  font-style: italic;
+}
+
 /* ---- the filter row ---- */
 
 .filter-row {

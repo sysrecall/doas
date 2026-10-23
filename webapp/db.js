@@ -119,3 +119,31 @@ export function chooseEntry({ tag = null, excludeId = null } = {}) {
 export function poolSize() {
   return db.prepare(`SELECT COUNT(*) AS n FROM entries WHERE hidden = 0`).get().n;
 }
+
+// --- reactions (slice 4) ---
+
+// One heart per account per sentence; clicking again is idempotent.
+export function heartSentence(entryId, sentenceIndex, accountId) {
+  const info = db
+    .prepare(
+      `INSERT OR IGNORE INTO hearts (entry_id, sentence_index, account_id)
+       VALUES (?, ?, ?)`
+    )
+    .run(entryId, sentenceIndex, accountId);
+  // changes = 1 when a new heart appeared, 0 when this account had already hearted.
+  return info.changes === 1;
+}
+
+export function heartCount(entryId, sentenceIndex) {
+  return db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM hearts WHERE entry_id = ? AND sentence_index = ?`
+    )
+    .get(entryId, sentenceIndex).n;
+}
+
+export function addComment(entryId, accountId, text) {
+  return db
+    .prepare(`INSERT INTO comments (entry_id, account_id, text) VALUES (?, ?, ?)`)
+    .run(entryId, accountId, text.trim());
+}
