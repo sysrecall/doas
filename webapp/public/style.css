@@ -151,6 +151,46 @@ main {
 
 .next { margin-top: 1.8rem; text-align: center; }
 
+/* ---- the filter row ---- */
+
+.filter-row {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.55rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-chip {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.1rem 0.85rem;
+  font-size: 0.84rem;
+  font-style: italic;
+  background: transparent;
+}
+
+.filter-chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+.filter-chip.active {
+  color: var(--ink);
+  border-color: var(--ink-soft);
+  background: var(--lamp-glow);
+}
+
+.entry + .fallback-whisper,
+.fallback-whisper {
+  margin: 0.55rem 0 0;
+  text-align: center;
+  color: var(--ink-soft);
+  opacity: 0.65;
+  font-style: italic;
+  font-size: 0.88rem;
+}
+
 .next-link {
   color: var(--ink-soft);
   text-decoration: none;
