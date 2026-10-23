@@ -2,6 +2,8 @@ import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { splitSentences } from "./lib/sentences.js";
+import { hashPassword, verifyPassword } from "./lib/auth.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(here, "data");
@@ -146,4 +148,48 @@ export function addComment(entryId, accountId, text) {
   return db
     .prepare(`INSERT INTO comments (entry_id, account_id, text) VALUES (?, ?, ?)`)
     .run(entryId, accountId, text.trim());
+}
+
+// --- publish (slice 5) ---
+
+// "Only your newest entry is public" is structural: one row per account,
+// updated in place. Republish = UPDATE on the same row.
+
+export function verifyOrCreateAccount(username, password) {
+  const name = String(username).trim();
+  const row = db
+    .prepare(`SELECT id, password_hash, password_salt FROM accounts WHERE username = ?`)
+    .get(name);
+  if (row) {
+    const ok = verifyPasswordRow(password, row);
+    return ok ? { accountId: row.id, created: false } : null;
+  }
+  if (name.length < 2 || name.length > 40 || String(password).length < 6) return null;
+  const { hash, salt } = hashPassword(password);
+  const id = db
+    .prepare(`INSERT INTO accounts (username, password_hash, password_salt) VALUES (?, ?, ?)`)
+    .run(name, hash, salt).lastInsertRowid;
+  return { accountId: id, created: true };
+}
+
+function verifyPasswordRow(password, row) {
+  return verifyPassword(String(password), row.password_hash, row.password_salt);
+}
+
+export function publishEntry(accountId, text, tags) {
+  const sentences = JSON.stringify(splitSentences(text));
+  const chips = JSON.stringify(tags);
+  const updated = db
+    .prepare(
+      `UPDATE entries
+          SET text = ?, sentences = ?, tags = ?, published_at = datetime('now')
+        WHERE account_id = ?`
+    )
+    .run(String(text).trim(), sentences, chips, accountId);
+  if (updated.changes > 0) {
+    return db.prepare(`SELECT id FROM entries WHERE account_id = ?`).get(accountId).id;
+  }
+  return db
+    .prepare(`INSERT INTO entries (account_id, text, sentences, tags) VALUES (?, ?, ?, ?)`)
+    .run(accountId, String(text).trim(), sentences, chips).lastInsertRowid;
 }

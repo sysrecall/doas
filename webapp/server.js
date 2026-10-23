@@ -7,6 +7,7 @@ import { sessionMiddleware } from "./lib/auth.js";
 import { mountPeek } from "./routes/peek.js";
 import { mountAuth } from "./routes/auth.js";
 import { mountReactions } from "./routes/reactions.js";
+import { mountPublish } from "./routes/publish.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -15,12 +16,14 @@ seedIfEmpty(db);
 
 const app = express();
 app.use(express.urlencoded({ extended: false })); // form posts (slices 4+)
+app.use(express.json()); // the plugin's publish contract (slice 5+)
 app.use(express.static(join(here, "public")));
 app.use(sessionMiddleware(db)); // reads the session cookie into req.account
 
 mountPeek(app);
 mountAuth(app);
 mountReactions(app);
+mountPublish(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
