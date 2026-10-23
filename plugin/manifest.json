@@ -1,7 +1,7 @@
 {
   "id": "diary-of-a-stranger",
   "name": "Diary of a Stranger",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "minAppVersion": "1.5.0",
   "description": "Publish your latest diary entry to a pool of strangers' pages — anonymously (hearts come back to your sentences).",
   "author": "sysrecall",

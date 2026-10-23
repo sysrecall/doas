@@ -24,12 +24,15 @@ const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work",
 
 // Windows/desktop builds: manifest and bundle are versioned together; the
 // Community plugins panel shows this, so a stale copy is immediately visible.
-const VERSION = "0.2.0";
+const VERSION = "0.2.1";
 
 // How long the writing must go quiet before an auto-publish fires. Diaries
 // breathe slowly; every keystroke must not be a publish (kernel cost: each
 // publish rewrites the writer's one pool row — cheap, but not free).
 const AUTO_DELAY_MS = 3 * 60 * 1000;
+// "Publish on save": Obsidian saves as you pause typing (there is no discrete
+// save action), so "on save" means a short pause with intent — a few seconds.
+const QUICK_DELAY_MS = 5 * 1000;
 
 type Chip = (typeof CHIPS)[number];
 
@@ -39,6 +42,7 @@ interface DiaryOfAStrangerSettings {
   username: string;
   password: string;
   autoPublish: boolean;
+  autoPublishQuick: boolean;
 }
 
 const DEFAULT_SETTINGS: DiaryOfAStrangerSettings = {
@@ -47,6 +51,7 @@ const DEFAULT_SETTINGS: DiaryOfAStrangerSettings = {
   username: "",
   password: "",
   autoPublish: false,
+  autoPublishQuick: false,
 };
 
 // ---------- tag extraction (plain markdown mechanics) ----------
@@ -259,7 +264,9 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
   }
 
   queueAutoPublish() {
-    this.queueAutoPublishSoon(AUTO_DELAY_MS);
+    // The settle window: diary-calm (3 min), or save-driven (seconds) when the
+    // writer opts into publishing on save.
+    this.queueAutoPublishSoon(this.settings.autoPublishQuick ? QUICK_DELAY_MS : AUTO_DELAY_MS);
   }
 
   queueAutoPublishSoon(ms: number) {
@@ -504,6 +511,19 @@ class DiarySettingTab extends PluginSettingTab {
             this.plugin.cancelAutoPublish();
           }
           await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Publish on save")
+      .setDesc(
+        "Needs auto publish. Skips the 3-minute breathing pause and sends ~5 seconds after the last save instead. Obsidian saves as you pause typing — there is no separate save action — so this is effectively 'on pause'."
+      )
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.autoPublishQuick).onChange(async (v) => {
+          this.plugin.settings.autoPublishQuick = v;
+          await this.plugin.saveSettings();
+          if (v && this.plugin.settings.autoPublish) this.plugin.queueAutoPublish();
         })
       );
   }

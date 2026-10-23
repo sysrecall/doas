@@ -73,6 +73,10 @@ content is skipped (no idle re-publish churn); refused words and network trouble
 still produce a Notice. The pool keeps one entry per writer either way: each
 publish *replaces* your previous one.
 
+**Publish on save (needs auto publish):** skips the 3-minute breathing pause and
+sends ~5 seconds after the last save instead. Obsidian has no separate save
+action — it saves as you pause typing — so this is effectively "on pause".
+
 A note on trust: usernames and passwords live in the plugin's settings inside
 your vault — it's your machine and your config file; the pool only ever stores
 the account record.
