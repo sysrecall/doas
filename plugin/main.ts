@@ -24,7 +24,7 @@ const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work",
 
 // Windows/desktop builds: manifest and bundle are versioned together; the
 // Community plugins panel shows this, so a stale copy is immediately visible.
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 
 type Chip = (typeof CHIPS)[number];
 
@@ -284,13 +284,16 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
 
     const native = chipsFromNote(content);
 
+    // Modal.open() is required — constructing alone shows nothing (the real-world
+    // silent-publish bug: the preview existed as an object but never as a window).
+    console.log(`[DoaS v${VERSION}] opening publish preview…`);
     new PublishModal(this.app, {
       note,
       text: body.trim(),
       native,
       poolAddress: this.settings.poolAddress,
       onPublish: (picked) => this.sendToPool(note, body.trim(), Array.from(new Set([...native, ...picked]))),
-    });
+    }).open();
   }
 
   private async sendToPool(note: TFile, text: string, tags: Chip[]) {
