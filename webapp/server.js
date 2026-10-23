@@ -26,6 +26,7 @@ app.use(express.json()); // the plugin's publish contract (slice 5+)
 // Echo the caller's origin and answer preflights for /api only — the pages
 // themselves stay same-origin; no cookies are ever granted cross-site.
 app.use("/api", (req, res, next) => {
+  console.log(`[pool] ${req.method} /api${req.url} from origin ${req.headers.origin ?? "none"}`);
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.setHeader("Vary", "Origin");
   if (req.method === "OPTIONS") {

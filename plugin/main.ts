@@ -22,6 +22,10 @@ import {
 // only pre-lights the checkboxes the writer sees in the preview.
 const CHIPS = ["melancholy", "hopeful", "tired", "late night", "family", "work", "small joys"] as const;
 
+// Windows/desktop builds: manifest and bundle are versioned together; the
+// Community plugins panel shows this, so a stale copy is immediately visible.
+const VERSION = "0.1.2";
+
 type Chip = (typeof CHIPS)[number];
 
 interface DiaryOfAStrangerSettings {
@@ -181,10 +185,12 @@ class PublishModal extends Modal {
     const go = actions.createEl("button", { text: "publish", cls: "mod-cta" });
     go.addEventListener("click", () => {
       const picked = boxes.filter((b) => b.checked).map((b) => b.value as Chip);
+      console.log(`[DoaS v${VERSION}] preview confirmed, closing (tags picked: ${picked.join(", ") || "none"})`);
       this.close();
       // Never let the send path fail silently — the writer gets a Notice for
       // network failures, refusals, AND crashes (real-world lesson).
-      Promise.resolve(this.onPublish(picked)).catch((e) => {
+      Promise.resolve(this.onPublish(picked)).catch((e: any) => {
+        console.log(`[DoaS v${VERSION}] send path CRASHED: ${e?.message ?? e}`);
         new Notice(`Publishing crashed mid-send: ${e?.message ?? e}`);
       });
     });
@@ -202,6 +208,7 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    console.log(`[DoaS v${VERSION}] plugin loaded (pool: ${this.settings.poolAddress})`);
 
     this.addCommand({
       id: "publish-latest",
@@ -234,6 +241,7 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
   }
 
   private async publishFlow() {
+    console.log(`[DoaS v${VERSION}] publish flow started`);
     // Plugin-not-configured state (prd.md > States and Boundaries): say what's missing, try nothing.
     const missing = this.configured();
     if (missing.length > 0) {
@@ -258,6 +266,7 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
     }
     const found: TFile[] = [];
     collectMarkdown(target, found);
+    console.log(`[DoaS v${VERSION}] diary folder "${folderPath || "/"}" → ${found.length} markdown note(s) found`);
     const note = chooseNewest(found);
     if (!note) {
       new Notice(
@@ -286,6 +295,7 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
 
   private async sendToPool(note: TFile, text: string, tags: Chip[]) {
     const pool = this.settings.poolAddress.trim().replace(/\/+$/, "");
+    console.log(`[DoaS v${VERSION}] sending ${text.length} chars to ${pool}/api/publish (tags: ${tags.join(", ") || "none"})`);
     let resp: RequestUrlResponse;
     try {
       // requestUrl rides Obsidian's own network stack — no CORS preflight,
@@ -303,8 +313,10 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
         }),
         throw: false, // HTTP error statuses come back as responses, not exceptions
       });
+      console.log(`[DoaS v${VERSION}] pool answered: status ${resp.status}`);
     } catch (e: any) {
       // The only throw here is the network itself.
+      console.log(`[DoaS v${VERSION}] request to pool REJECTED: ${e?.message ?? e}`);
       new Notice(`Is the diary pool running? The request to ${pool} failed — ${e?.message ?? e}`);
       return;
     }
