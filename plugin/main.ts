@@ -13,6 +13,8 @@ import {
   TFile,
   TFolder,
   Plugin,
+  requestUrl,
+  RequestUrlResponse,
 } from "obsidian";
 
 // The pool's whole filter language (learner-confirmed set). Kept in step with
@@ -180,7 +182,11 @@ class PublishModal extends Modal {
     go.addEventListener("click", () => {
       const picked = boxes.filter((b) => b.checked).map((b) => b.value as Chip);
       this.close();
-      this.onPublish(picked);
+      // Never let the send path fail silently — the writer gets a Notice for
+      // network failures, refusals, AND crashes (real-world lesson).
+      Promise.resolve(this.onPublish(picked)).catch((e) => {
+        new Notice(`Publishing crashed mid-send: ${e?.message ?? e}`);
+      });
     });
   }
 
@@ -200,7 +206,10 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
     this.addCommand({
       id: "publish-latest",
       name: "Publish to Diary of a Stranger",
-      callback: () => this.publishFlow(),
+      callback: () => {
+        // Any crash inside the flow becomes a visible Notice, never a mystery.
+        this.publishFlow().catch((e) => new Notice(`Publish stopped early: ${e?.message ?? e}`));
+      },
     });
 
     this.addSettingTab(new DiarySettingTab(this.app, this));
@@ -277,9 +286,12 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
 
   private async sendToPool(note: TFile, text: string, tags: Chip[]) {
     const pool = this.settings.poolAddress.trim().replace(/\/+$/, "");
-    let resp: Response;
+    let resp: RequestUrlResponse;
     try {
-      resp = await fetch(`${pool}/api/publish`, {
+      // requestUrl rides Obsidian's own network stack — no CORS preflight,
+      // no renderer sandbox. `fetch` from app:// could be blocked silently.
+      resp = await requestUrl({
+        url: `${pool}/api/publish`,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -289,28 +301,28 @@ export default class DiaryOfAStrangerPlugin extends Plugin {
           tags,
           sourceNote: note.name,
         }),
+        throw: false, // HTTP error statuses come back as responses, not exceptions
       });
-    } catch (e) {
-      new Notice(`Is the diary pool running? Couldn't reach ${pool}.`);
+    } catch (e: any) {
+      // The only throw here is the network itself.
+      new Notice(`Is the diary pool running? The request to ${pool} failed — ${e?.message ?? e}`);
       return;
     }
 
     let data: any = null;
     try {
-      data = await resp.json();
+      data = resp.json;
     } catch (e) {
-      // fall through to generic handling below
+      data = null;
     }
 
-    if (resp.ok && data?.ok) {
-      new Notice(`Published — ${data.createdAccount ? "your account just came into being. " : ""}Peek at ${pool}${data.payoffPath ?? "/mine"} to see hearts land.`);
+    if (resp.status === 200 && data?.ok) {
+      new Notice(
+        `Published — ${data.createdAccount ? "your account just came into being. " : ""}Peek at ${pool}${data.payoffPath ?? "/mine"} to see hearts land.`
+      );
       return;
     }
-    if (resp.status === 401 && data?.error) {
-      new Notice(data.error);
-      return;
-    }
-    if (resp.status === 422 && data?.error) {
+    if (data?.error && (resp.status === 401 || resp.status === 422 || resp.status === 400)) {
       new Notice(data.error);
       return;
     }

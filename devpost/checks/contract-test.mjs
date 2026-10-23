@@ -60,6 +60,33 @@ for (let i = 0; i < 50 && !ready; i++) {
 try {
   if (!ready) throw new Error("scratch server never got ready on " + BASE);
 
+  // 0a — the Obsidian renderer preflights cross-origin POSTs; the pool must
+  // answer them (real-world: the plugin's first send died silently here).
+  const pf = await fetch(`${BASE}/api/publish`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: "app://obsidian.md",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type",
+    },
+  });
+  check("preflight OPTIONS /api/publish → 204", pf.status === 204);
+  check(
+    'preflight allows app://obsidian.md + content-type',
+    pf.headers.get("access-control-allow-origin") === "app://obsidian.md" &&
+      pf.headers.get("access-control-allow-headers") === "content-type"
+  );
+
+  // 0b — the same POST with a browser-style Origin header must succeed: the
+  // CORS layer admits the app origin without loosening anything else.
+  const crossOrigin = await publish({
+    ...creds,
+    username: "origin-ghost",
+    text: "Cross-origin publish from a sandboxed window.",
+    tags: [],
+  });
+  check("POST with Origin app://obsidian.md → 200 ok", crossOrigin.status === 200 && crossOrigin.data?.ok === true);
+
   // 1 — first publish: creates the account and the entry, in one motion.
   const v1 = await publish({
     ...creds,
