@@ -19,6 +19,12 @@ html, body {
   padding: 0;
 }
 
+/* Keep the scrollbar's lane always reserved, so a long entry arriving (and its
+   scrollbar appearing) never shifts the layout — the page holds its line. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   min-height: 100vh;
   background:
