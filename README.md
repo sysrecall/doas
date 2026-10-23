@@ -81,6 +81,22 @@ the account, republish replaces the same entry row, tags normalize to the seven
 chips, wrong passwords and banned words are refused as designed. Ten checks, all
 against `POST /api/publish`.
 
+## Demo script
+
+The two-minute tour, for the demo video or your own kick-the-tires pass:
+
+1. `npm start` → open `http://localhost:3000` — read a stranger, click **turn to
+   another stranger →** a few times, try a chip row entry.
+2. Try a nonsense filter (`?tag=zebra`): random stranger + the dim whisper.
+3. **log in → create account** (ten seconds, no email) → heart two different
+   sentences, post one comment, reload — counts stick, everything nameless.
+4. In Obsidian: palette → **Publish to Diary of a Stranger** → confirm the preview
+   → visit **your page**: your entry, as strangers see it, hearts on the lines that
+   landed.
+5. Report a comment (quiet `report` link) — watch it vanish; visit
+   `http://localhost:3000/moderation` — the review desk lists it with content and
+   time. Report a whole page and it's gone from the draws instantly.
+
 ## Layout
 
 ```

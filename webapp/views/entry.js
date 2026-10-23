@@ -21,12 +21,8 @@ export function entryBody(entry, { account = null, commentError = null, mineView
     (c) =>
       `<li class="comment"><span class="comment-meta">a stranger, ${esc(
         relativeTime(c.created_at)
-      )}</span><span class="comment-text">${esc(c.text)}</span></li>`
+      )}</span><span class="comment-text">${esc(c.text)}</span><span class="report-link"><form method="post" action="/report" class="report-form"><input type="hidden" name="type" value="comment" /><input type="hidden" name="id" value="${c.id}" /><button class="report-button" type="submit" title="report this comment">report</button></form></span></li>`
   );
-
-  const comments = commentLines.length
-    ? `<ol class="comments">${commentLines.join("")}</ol>`
-    : `<ol class="comments"></ol>`;
 
   const commentForm = account
     ? `<form class="comment-form" method="post" action="/comments">
@@ -40,6 +36,9 @@ export function entryBody(entry, { account = null, commentError = null, mineView
 
   const err = commentError ? `<p class="comment-error">${esc(commentError)}</p>` : "";
 
+  // The report door (PRD > Moderation): quiet, unshouted, open to any reader.
+  const reportEntryForm = `<div class="entry-actions"><form method="post" action="/report" class="report-form"><input type="hidden" name="type" value="entry" /><input type="hidden" name="id" value="${entry.id}" /><button class="report-button" type="submit">report this page</button></form></div>`;
+
   return `
   <article class="entry${mineView ? " entry-mine" : ""}" data-entry-id="${entry.id}">
     <div class="entry-meta">
@@ -47,11 +46,16 @@ export function entryBody(entry, { account = null, commentError = null, mineView
       <span class="entry-date">${esc(relativeTime(entry.published_at))}</span>
     </div>
     <div class="entry-text">${sentences}</div>
-    <div class="entry-footnotes">${comments}${err}${commentForm}</div>
+    <div class="entry-footnotes">${commentsLine(commentLines)}${err}${commentForm}</div>
+    ${reportEntryForm}
     ${
       mineView
         ? ""
         : `<nav class="next"><a class="next-link" href="/?after=${entry.id}">turn to another stranger →</a></nav>`
     }
   </article>`;
+}
+
+function commentsLine(lines) {
+  return lines.length ? `<ol class="comments">${lines.join("")}</ol>` : '<ol class="comments"></ol>';
 }

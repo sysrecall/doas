@@ -9,6 +9,8 @@ import { mountAuth } from "./routes/auth.js";
 import { mountReactions } from "./routes/reactions.js";
 import { mountPublish } from "./routes/publish.js";
 import { mountMine } from "./routes/mine.js";
+import { mountReports } from "./routes/reports.js";
+import { mountModeration } from "./routes/moderation.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -26,6 +28,8 @@ mountAuth(app);
 mountReactions(app);
 mountPublish(app);
 mountMine(app);
+mountReports(app);
+mountModeration(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

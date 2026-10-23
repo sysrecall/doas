@@ -7,10 +7,16 @@ export function mountPeek(app) {
     const rawTag = typeof req.query.tag === "string" ? req.query.tag.trim().toLowerCase() : null;
     const activeTag = rawTag || null;
     // Direct return after hearting/commenting: show the SAME entry again.
+    // A reported (hidden) entry never gets pinned — the report turns it into
+    // a fresh draw, immediately (PRD > Moderation: out of the draws at once).
     const pinnedId = req.query.entry != null ? Number(req.query.entry) : null;
     const pinned = pinnedId != null && Number.isInteger(pinnedId) ? getEntryFull(pinnedId) : null;
-    if (pinned) {
+    if (pinned && !pinned.hidden) {
       res.send(renderPeek(pinned, { account: req.account }));
+      return;
+    }
+    if (pinned?.hidden) {
+      res.redirect(303, "/");
       return;
     }
     let entry = chooseEntry({ tag: activeTag, excludeId });

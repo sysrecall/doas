@@ -386,6 +386,63 @@ main {
 
 .door-back a { color: var(--ink-soft); }
 
+/* ---- the report door + the review desk ---- */
+
+.entry-actions { margin-top: 0.4rem; }
+
+.report-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-family: var(--serif);
+  font-size: 0.78rem;
+  font-style: italic;
+  opacity: 0.55;
+  cursor: pointer;
+  border-bottom: 1px dotted var(--rule);
+}
+
+.report-button:hover { opacity: 1; color: var(--heart); border-bottom-color: var(--heart); }
+
+.report-form { display: inline; margin: 0; }
+
+.report-link { margin-left: 0.6rem; }
+
+.mod-header {
+  max-width: 660px;
+  margin: 2rem auto 0;
+  text-align: center;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.mod-list {
+  list-style: none;
+  max-width: 660px;
+  margin: 1.4rem auto 0;
+  padding: 0;
+}
+
+.mod-row {
+  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.mod-meta {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-style: italic;
+  margin-bottom: 0.45rem;
+}
+
+.mod-text { font-size: 0.95rem; line-height: 1.65; color: var(--ink); }
+
 .entry + .fallback-whisper,
 .fallback-whisper {
   margin: 0.55rem 0 0;

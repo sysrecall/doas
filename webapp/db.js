@@ -87,7 +87,7 @@ export function getEntryFull(id) {
   const heartCounts = new Map(counts.map((c) => [c.sentence_index, c.n]));
   const comments = db
     .prepare(
-      `SELECT text, created_at
+      `SELECT id, text, created_at
          FROM comments
         WHERE entry_id = ? AND hidden = 0
         ORDER BY datetime(created_at) ASC`
@@ -154,6 +154,41 @@ export function addComment(entryId, accountId, text) {
   return db
     .prepare(`INSERT INTO comments (entry_id, account_id, text) VALUES (?, ?, ?)`)
     .run(entryId, accountId, text.trim());
+}
+
+// --- moderation (slice 8) ---
+
+// A report hides its target immediately (draws and comment renders both filter
+// on hidden = 0) and records the event; the review list never loses rows.
+export function reportEntry(targetId) {
+  db.prepare(`INSERT INTO reports (type, target_id) VALUES ('entry', ?)`).run(targetId);
+  db.prepare(`UPDATE entries SET hidden = 1 WHERE id = ?`).run(targetId);
+}
+
+export function reportComment(targetId) {
+  db.prepare(`INSERT INTO reports (type, target_id) VALUES ('comment', ?)`).run(targetId);
+  db.prepare(`UPDATE comments SET hidden = 1 WHERE id = ?`).run(targetId);
+}
+
+export function findComment(commentId) {
+  return db.prepare(`SELECT id, entry_id, hidden FROM comments WHERE id = ?`).get(commentId);
+}
+
+// The review page's rows: every report ever, with the reported content beside it.
+// Joins both tables and picks the right text per type.
+export function listReports() {
+  return db
+    .prepare(
+      `SELECT r.id, r.type, r.target_id, r.created_at,
+              COALESCE(c.text, e.text) AS text,
+              CASE WHEN r.type = 'comment' THEN c.entry_id ELSE e.id END AS entry_id,
+              COALESCE(c.hidden, e.hidden) AS hidden
+         FROM reports r
+         LEFT JOIN comments c ON r.type = 'comment' AND c.id = r.target_id
+         LEFT JOIN entries  e ON r.type = 'entry'   AND e.id = r.target_id
+        ORDER BY datetime(r.created_at) DESC, r.id DESC`
+    )
+    .all();
 }
 
 // --- publish (slice 5) ---

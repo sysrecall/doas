@@ -18,7 +18,7 @@ export function mountReactions(app) {
     const entryId = Number(req.body?.entryId);
     const sentenceIndex = Number(req.body?.sentenceIndex);
     const entry = Number.isInteger(entryId) ? getEntryFull(entryId) : null;
-    if (!entry || !Number.isInteger(sentenceIndex) || sentenceIndex < 0 || sentenceIndex >= entry.sentences.length) {
+    if (!entry || entry.hidden || !Number.isInteger(sentenceIndex) || sentenceIndex < 0 || sentenceIndex >= entry.sentences.length) {
       res.status(404).send("That sentence isn't in the pool.");
       return;
     }
@@ -34,7 +34,8 @@ export function mountReactions(app) {
     const entryId = Number(req.body?.entryId);
     const text = String(req.body?.text ?? "").replace(/\s+/g, " ").trim();
     const entry = Number.isInteger(entryId) ? getEntryFull(entryId) : null;
-    if (!entry) {
+    if (!entry || entry.hidden) {
+      // Voting on (or under) a reported page is closed.
       res.status(404).send("That entry isn't in the pool.");
       return;
     }
