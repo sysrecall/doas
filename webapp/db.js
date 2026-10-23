@@ -223,7 +223,7 @@ export function publishEntry(accountId, text, tags) {
   const updated = db
     .prepare(
       `UPDATE entries
-          SET text = ?, sentences = ?, tags = ?, published_at = datetime('now')
+          SET text = ?, sentences = ?, tags = ?, published_at = datetime('now'), hidden = 0
         WHERE account_id = ?`
     )
     .run(String(text).trim(), sentences, chips, accountId);
