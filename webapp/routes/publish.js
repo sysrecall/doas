@@ -13,7 +13,7 @@ import { verifyOrCreateAccount, publishEntry } from "../db.js";
 import { findBannedWord, refusalLine } from "../lib/banned.js";
 import { credentialFailureLine } from "../lib/auth.js";
 
-import { CHIPS } from "../lib/chips.js";
+import { CHIPS, normalizeTag } from "../lib/chips.js";
 
 export function normalizeTags(raw) {
   const list = Array.isArray(raw) ? raw : [];
