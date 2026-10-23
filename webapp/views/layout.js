@@ -13,7 +13,7 @@ export function esc(s) {
 
 export function layout({ body, extraClass = "", account = null }) {
   const authNav = account
-    ? `<form method="post" action="/logout" class="nav-form"><button class="masthead-link" type="submit">log out</button></form>`
+    ? `<a class="masthead-link" href="/mine">your page</a><form method="post" action="/logout" class="nav-form"><button class="masthead-link" type="submit">log out</button></form>`
     : `<a class="masthead-link" href="/login">log in</a>`;
   return `<!doctype html>
 <html lang="en">

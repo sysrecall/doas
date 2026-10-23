@@ -257,6 +257,32 @@ main {
 
 /* ---- masthead nav (the permission door's handle) ---- */
 
+.masthead-nav { display: inline-flex; gap: 0.9rem; align-items: baseline; }
+
+.mine-link { color: var(--ink-soft); font-size: 0.86rem; font-style: italic; text-decoration: none; border-bottom: 1px solid var(--rule); }
+
+/* ---- the payoff page ---- */
+
+.mine-greeting {
+  max-width: 660px;
+  margin: 2rem auto 0;
+  color: var(--ink-soft);
+  font-style: italic;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.mine-empty { max-width: 560px; margin: 2rem auto 0; }
+
+.mine-empty-hint {
+  color: var(--ink-soft);
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+/* ---- masthead nav (the permission door's handle) ---- */
+
 .masthead-nav { display: inline-flex; }
 
 .nav-form { margin: 0; }

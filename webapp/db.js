@@ -101,6 +101,11 @@ export function getEntryFull(id) {
   };
 }
 
+export function getEntryForAccount(accountId) {
+  const row = db.prepare(`SELECT id FROM entries WHERE account_id = ?`).get(accountId);
+  return row ? getEntryFull(row.id) : null;
+}
+
 // Random draw among current, unreported entries; optional tag filter and
 // "don't show the one I'm looking at" exclusion. Pure random — spec decision.
 export function chooseEntry({ tag = null, excludeId = null } = {}) {

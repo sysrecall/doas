@@ -8,6 +8,7 @@ import { mountPeek } from "./routes/peek.js";
 import { mountAuth } from "./routes/auth.js";
 import { mountReactions } from "./routes/reactions.js";
 import { mountPublish } from "./routes/publish.js";
+import { mountMine } from "./routes/mine.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +25,7 @@ mountPeek(app);
 mountAuth(app);
 mountReactions(app);
 mountPublish(app);
+mountMine(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
