@@ -30,7 +30,7 @@ export function layout({ body, extraClass = "", account = null }) {
     <span class="masthead-nav">${authNav}</span>
   </header>
   <main>${body}</main>
-  <footer class="colophon">entries are anonymous by design · the pool is small tonight</footer>
+  <footer class="colophon">Isn't everything amazing?</footer>
 </body>
 </html>`;
 }
