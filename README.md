@@ -123,3 +123,7 @@ webapp/                the pool server (no client-side JS — form posts, SSR vi
 plugin/                the Obsidian plugin (TypeScript; esbuild → main.js)
 devpost/               planning documents + checks/
 ```
+
+## License
+
+MIT — the entire repo, including the Obsidian plugin. Anthology of strangers not included.
