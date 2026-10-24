@@ -136,9 +136,10 @@ Activity mode: live app + editor (learner's machine; pool running at `localhost:
 
 - [x] GitHub repository created and pushed by the learner — `git@github.com:sysrecall/doas.git`; `main` synced at `8ef8094` (seed-pool refresh, hidden-flag fix, native-tag fixes all included)
 - [x] Privacy verification before publish — whole-history scan finds no database, no backups, no `learner-profile.md`, no bundle artifact, no secrets anywhere in the pushed tree; real user data (`john`, session rows, password hashes) lives only in the gitignored local db
-- [ ] **Repository visible without auth** — learner verified it exists on github.com while logged in; visibility flip to public pending (24.10 record: unauthenticated web + API both 404, i.e. currently private). MUST be public before the Devpost submission links it
+- [x] **Repository visible without auth** — verified by fetch on 24.10: `github.com/sysrecall/doas` serves the full README with the **Public** badge, MIT license badge and all 27 commits, logged out. Gate closed
 - [x] MIT license added (`LICENSE`, 2026 sysrecall; reviewer's earlier offer accepted) + README License section — pushed with the same push as the ship log
-- [ ] Demo video recorded and linked
-- [ ] Devpost submission fields authored by the learner; exit survey answered; submission sent
+- [x] Learner reports: video uploaded and the Devpost submission sent (24.10) — external verification of the video link and the Devpost entry URL pending the learner pasting them
+- [ ] Demo video link verified outside (plays logged-out) and recorded here
+- [ ] Devpost entry URL recorded; exit survey confirmed answered; judge-side link end-to-end check
 
 - Note: the three planning docs (`devpost/scope.md`, `prd.md`, `spec.md`) remain deliberately untracked; staging them for the repo is the learner's call at publish time (privacy-reviewed and safe).
