@@ -32,9 +32,10 @@ npm install
 npm start            # http://localhost:3000
 ```
 
-The database is SQLite, created at `webapp/data/diary_pool.db`; five seeded
-strangers (covering all seven chips, with seed hearts and comments) appear the
-first time so the pool is never empty.
+The database is SQLite, created at `webapp/data/diary_pool.db`; seven seeded
+strangers (every chip covered twice, with seed hearts and comments) appear the
+first time so the pool is never empty. Seed timestamps are relative — a fresh
+pool always looks like entries were written yesterday.
 
 ## See the payoff
 
@@ -90,8 +91,8 @@ npm test
 Spawns a **scratch pool** (own port, own database — your learning pool stays
 untouched) and replays the plugin's exact POST payloads: first publish creates
 the account, republish replaces the same entry row, tags normalize to the seven
-chips, wrong passwords and banned words are refused as designed. Ten checks, all
-against `POST /api/publish`.
+chips, wrong passwords and banned words are refused as designed. Eighteen
+checks, all against `POST /api/publish`.
 
 ## Demo script
 
@@ -115,7 +116,7 @@ The two-minute tour, for the demo video or your own kick-the-tires pass:
 webapp/                the pool server (no client-side JS — form posts, SSR views)
   server.js            Express wiring
   db.js                schema + queries (accounts, entries, hearts, comments, reports, sessions)
-  seed.js              five initial strangers
+  seed.js              seven initial strangers
   lib/                 auth, moderation, sentence splitting
   routes/              peek, auth, reactions, publish, mine
   views/               SSR page templates + shared entry renderer
